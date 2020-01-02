@@ -63,7 +63,7 @@ class RLPTx(rlp.Serializable):
         ('data', binary),
     ]
 
-    def __init__(self, nonce: int, gasprice: int, startgas: int, to: str, value: int, data: str):
+    def __init__(self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str):
         super(RLPTx, self).__init__(nonce, gasprice, startgas, to, value, data)
 
     def sender(self, value: str) -> None:
@@ -89,8 +89,8 @@ class RLPSignedTx(rlp.Serializable):
         ('s', big_endian_int),
     ]
 
-    def __init__(self, nonce: int, gasprice: int, startgas: int, to: str, value: int, data: str,
-                 v: int = 0, r: int = 0, s: int = 0):
+    def __init__(self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str,
+                 v: int, r: int, s: int):
         super(RLPSignedTx, self).__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
 
     def sender(self, value: str) -> None:
