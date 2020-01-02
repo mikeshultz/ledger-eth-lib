@@ -6,7 +6,7 @@ This is a library to interact with [ledger-app-eth](https://github.com/LedgerHQ/
 Ethereum app for the [Ledger hardware wallets](https://www.ledger.com/).  It's goal is to make
 interfacing with the Ledger nice and simple with well known Ethereum+Python tools.
 
-## Usage
+## Quickstart
 
 ### Get Accounts
 
@@ -51,16 +51,24 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
 
 ## API
 
-### get_accounts(dongle: Any = None)
+### `get_accounts(dongle: Any = None)`
 
 Fetch a `List` of accounts.
 
 **NOTE**: This will currently only return the default/primary account from the device.
 
-### sign_transaction(tx: Serializable, dongle: Any = None)
+### `sign_transaction(tx: Serializable, dongle: Any = None)`
 
 Sign a `rlp.Serializable` transaction.
 
-### create_transaction(to: bytes, sender: bytes, value: int, gas: int, gas_price: int, nonce: int, data: bytes, dongle: Any = None)
+### `create_transaction(to: bytes, sender: bytes, value: int, gas: int, gas_price: int, nonce: int, data: bytes, dongle: Any = None)`
 
 Create and sign an `rlp.Serializable` transaction from provided params
+
+## TODO
+
+- Add fake dongle support to pytest suite so tests can be run without a real Ledger and human interaction
+- Fill out tests
+- Add messaging signing support
+- Add support for multiple accounts(different derivations?)
+
