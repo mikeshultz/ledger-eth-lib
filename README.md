@@ -6,6 +6,20 @@ This is a library to interact with [ledger-app-eth](https://github.com/LedgerHQ/
 Ethereum app for the [Ledger hardware wallets](https://www.ledger.com/).  It's goal is to make
 interfacing with the Ledger nice and simple with well known Ethereum+Python tools.
 
+## Web3.py Integration
+
+ledger-eth-lib provides a Web3.py middleware.  It will automatically intercept the relevant JSON-RPC
+calls and respond with data from your Ledger device.
+
+    from web3.auto import w3
+    from ledgereth.web3 import LedgerSignerMiddleware
+    w3.middleware_onion.add(LedgerSignerMiddleware)
+
+### Intercepted JSON-RPC methods:
+
+- `eth_sendTransaction`
+- `eth_accounts`
+
 ## Quickstart
 
 ### Get Accounts
@@ -71,4 +85,3 @@ Create and sign an `rlp.Serializable` transaction from provided params
 - Fill out tests
 - Add messaging signing support
 - Add support for multiple accounts(different derivations?)
-
