@@ -1,6 +1,10 @@
 # ledger-eth-lib
 
-WIP
+**This is a WIP.  Consider it alpha**
+
+This is a library to interact with [ledger-app-eth](https://github.com/LedgerHQ/ledger-app-eth), the
+Ethereum app for the Ledger hardware wallets.  It's goal is to make interfacing with the ledger
+nice and simple with well known Ethereum+Python tools.
 
 ## Usage
 
