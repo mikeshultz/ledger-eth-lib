@@ -43,7 +43,6 @@ Create a transaction object and sign it.
         int(1e9),  # gas price
         1  # nonce
     )
-    # TODO: Double check this
     signature = '0x{}{}{}'.format(
         hex(tx.v)[2:],
         hex(tx.r)[2:],
@@ -56,7 +55,6 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
 
     from ledgereth import sign_transaction
     tx = sign_transaction(tx)
-    # TODO: Double check this
     signature = '0x{}{}{}'.format(
         hex(tx.v)[2:],
         hex(tx.r)[2:],
