@@ -6,6 +6,8 @@ This is a library to interact with [ledger-app-eth](https://github.com/LedgerHQ/
 Ethereum app for the [Ledger hardware wallets](https://www.ledger.com/).  It's goal is to make
 interfacing with the Ledger nice and simple with well known Ethereum+Python tools.
 
+**NOTE**: Tested to work on Ledger Nano S and Nano X.  Will probalby work with Ledger Blue
+
 ## Web3.py Integration
 
 ledger-eth-lib provides a Web3.py middleware.  It will automatically intercept the relevant JSON-RPC
