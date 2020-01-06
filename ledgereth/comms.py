@@ -79,7 +79,10 @@ def translate_exception(exp: Exception) -> Exception:
     elif any([x in string_err for x in ['6700', '6d00']]):
         return Exception('Please open the Ethereum app on your Ledger device')
     elif '6a80' in string_err:
-        return Exception('Invalid transaction?')
+        return Exception(
+            'General failure: Invalid transaction, contract data not allowed in settings, or'
+            ' something else?'
+        )
     else:
         return exp
 
