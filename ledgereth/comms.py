@@ -98,7 +98,7 @@ def dongle_send(dongle, command_string: str) -> bytes:
 
 def dongle_send_data(dongle, command_string: str, data: bytes, Lc: bytes = None,
                      Le: bytes = None) -> bytes:
-    """ Send a command to the dongle """
+    """ Send a command with data to the dongle """
     hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)
     retval = None
     try:
@@ -126,7 +126,7 @@ def chunks(it: bytes, chunk_size: int = 255):
 
 
 def decode_response_version_from_config(confbytes: bytes) -> str:
-    """ PUll the string version from the bytearray out from Ledger device """
+    """ Decode the string version from the bytearray response from Ledger device """
     return '{}.{}.{}'.format(
         confbytes[1],
         confbytes[2],

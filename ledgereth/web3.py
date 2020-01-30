@@ -5,7 +5,7 @@ from eth_utils import encode_hex, decode_hex
 
 from ledgereth.constants import DEFAULT_PATH_ENCODED
 from ledgereth.comms import init_dongle, chunks, dongle_send, dongle_send_data, decode_response_address
-from ledgereth.objects import RLPTx, RLPSignedTx
+from ledgereth.objects import Transaction, SignedTransaction
 from ledgereth.utils import is_hex_string
 
 from typing import Any, Union
@@ -30,9 +30,9 @@ def sign_transaction(tx: Serializable, dongle: Any = None):
     dongle = init_dongle(dongle)
     retval = None
 
-    assert isinstance(tx, RLPTx), "Only RLPTx transaction objects are currently supported"
+    assert isinstance(tx, Transaction), "Only RLPTx transaction objects are currently supported"
     print('tx: ', tx)
-    encoded_tx = encode(tx, RLPTx)
+    encoded_tx = encode(tx, Transaction)
     payload = (len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, 'big') + DEFAULT_PATH_ENCODED + encoded_tx
 
     chunk_count = 0
@@ -66,7 +66,7 @@ def sign_transaction(tx: Serializable, dongle: Any = None):
     r = int(binascii.hexlify(retval[1:33]), 16)
     s = int(binascii.hexlify(retval[33:65]), 16)
 
-    return RLPSignedTx(
+    return SignedTransaction(
         nonce=tx.nonce,
         gasprice=tx.gasprice,
         startgas=tx.startgas,
@@ -88,7 +88,7 @@ def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: i
         data = decode_hex(data) or b''
 
     # Create a serializable tx object
-    tx = RLPTx(
+    tx = Transaction(
         # to=decode_hex(address),
         to=decode_hex(to),
         #value=hex(value),
@@ -119,7 +119,7 @@ class LedgerSignerMiddleware:
                     nonce=tx_obj.get('nonce'),
                     data=tx_obj.get('data', ''),
                 )
-                new_params.append(encode_hex(encode(raw_tx, RLPSignedTx)))
+                new_params.append(encode_hex(encode(raw_tx, SignedTransaction)))
 
             # Change to raw tx call
             method = 'eth_sendRawTransaction'

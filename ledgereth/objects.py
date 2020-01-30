@@ -53,7 +53,7 @@ class ISO7816Command:
         return self.encode().hex()
 
 
-class RLPTx(rlp.Serializable):
+class Transaction(rlp.Serializable):
     fields = [
         ('nonce', big_endian_int),
         ('gasprice', big_endian_int),
@@ -76,7 +76,7 @@ class RLPTx(rlp.Serializable):
         return d
 
 
-class RLPSignedTx(rlp.Serializable):
+class SignedTransaction(rlp.Serializable):
     fields = [
         ('nonce', big_endian_int),
         ('gasprice', big_endian_int),
@@ -91,7 +91,7 @@ class RLPSignedTx(rlp.Serializable):
 
     def __init__(self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str,
                  v: int, r: int, s: int):
-        super(RLPSignedTx, self).__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
+        super(SignedTransaction, self).__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
 
     def sender(self, value: str) -> None:
         self._sender = value
@@ -101,3 +101,8 @@ class RLPSignedTx(rlp.Serializable):
         for name, _ in self.__class__._meta.fields:
             d[name] = getattr(self, name)
         return d
+
+
+# Compat: Depreciated
+RLPTx = Transaction
+RLPSignedTx = SignedTransaction
