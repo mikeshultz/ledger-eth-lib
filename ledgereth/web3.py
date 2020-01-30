@@ -4,25 +4,50 @@ from rlp import Serializable, encode
 from eth_utils import encode_hex, decode_hex
 
 from ledgereth.constants import DEFAULT_PATH_ENCODED
-from ledgereth.comms import init_dongle, chunks, dongle_send, dongle_send_data, decode_response_address
+from ledgereth.comms import (
+    init_dongle,
+    chunks,
+    dongle_send,
+    dongle_send_data,
+    decode_response_address,
+)
 from ledgereth.objects import Transaction, SignedTransaction
-from ledgereth.utils import is_hex_string
+from ledgereth.utils import is_hex_string, parse_bip32_path
 
 from typing import Any, Union
 
 Text = Union[str, bytes]
 CHAIN_ID = 1
+DEFAULT_ACCOUNTS_FETCH = 1
 
 
-def get_accounts(dongle: Any = None):
+def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH):
     """ Return available accounts """
+    addresses = []
     dongle = init_dongle(dongle)
 
-    # TODO: Support multiple accounts?
-    response = dongle_send(dongle, 'GET_DEFAULT_ADDRESS_NO_CONFIRM')
-
-    # Use a List for future support of multiple accounts
-    return [decode_response_address(response)]
+    if count == 1:
+        response = dongle_send(dongle, 'GET_DEFAULT_ADDRESS_NO_CONFIRM')
+        addresses.append(decode_response_address(response))
+    else:
+        """
+        TODO: Verify path derivation is standard for ETH/ledger. Which one?
+        1) 44'/60'/0'/0/1
+        2) 44'/60'/0'/1/0
+        2) 44'/60'/1'/0/0
+        """
+        for i in range(count):
+            path = parse_bip32_path("44'/60'/0'/0/{}".format(i))
+            lc = len(path).to_bytes(1, 'big')
+            data = (len(path) // 4).to_bytes(1, 'big') + path
+            response = dongle_send_data(
+                dongle,
+                'GET_ADDRESS_NO_CONFIRM',
+                data,
+                Lc=lc
+            )
+            addresses.append(decode_response_address(response))
+    return addresses
 
 
 def sign_transaction(tx: Serializable, dongle: Any = None):

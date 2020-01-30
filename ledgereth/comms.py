@@ -35,6 +35,15 @@ class LedgerCommands:
         data=(len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, 'big') + DEFAULT_PATH_ENCODED,
     )
 
+    GET_ADDRESS_NO_CONFIRM = ISO7816Command(
+        CLA=b'\xe0',
+        INS=b'\x02',
+        P1=b'\x00',  # 0x00 - Return addres | 0x01 - Confirm befor ereturning
+        P2=b'\x00',  # 0x00 - No chain code | 0x01 - With chain code
+        # Lc=len(DEFAULT_PATH_ENCODED).to_bytes(1, 'big'),  # Payload byte length
+        # data=(len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, 'big') + DEFAULT_PATH_ENCODED,
+    )
+
     SIGN_TX_FIRST_DATA = ISO7816Command(
         CLA=b'\xe0',
         INS=b'\x04',
