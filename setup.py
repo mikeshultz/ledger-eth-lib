@@ -1,11 +1,6 @@
-import sys
-import shutil
 import ledgereth
 from os import path
-from setuptools import Command, setup, find_packages
-from setuptools.command.develop import develop
-from setuptools.command.install import install
-from subprocess import check_call, CalledProcessError
+from setuptools import setup, find_packages
 
 pwd = path.abspath(path.dirname(__file__))
 
