@@ -47,6 +47,7 @@ def test_comms_account(yield_dongle):
 
 
 def test_comms_multiple_accounts(yield_dongle):
+    addresses = []
     with yield_dongle() as dongle:
         for i in range(5):
             path = parse_bip32_path("44'/60'/0'/0/{}".format(i))
@@ -66,6 +67,8 @@ def test_comms_multiple_accounts(yield_dongle):
             assert type(address) == str
             assert len(address) == 42
             assert address.startswith('0x')
+            assert address not in addresses
+            addresses.append(address)
 
 
 def test_comms_sign_small_tx(yield_dongle):
