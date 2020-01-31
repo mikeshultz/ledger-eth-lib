@@ -8,6 +8,12 @@ interfacing with the Ledger nice and simple with well known Ethereum+Python tool
 
 **NOTE**: Tested to work on Ledger Nano S and Nano X.  Will probalby work with Ledger Blue
 
+**WARNING**: The Ledger apps have changed the way accounts are derived with the release of Ledger
+Live.  If you created your Ledger account(s) with the older Chrome app and want to use those
+account(s) with this library, you will need to set the `LEDGER_LEGACY_ACCOUNTS` env var. You can
+only use one or the other at a time.  See [the notes in source for more
+information](blob/master/ledgereth/web3.py#L23).
+
 ## Web3.py Integration
 
 ledger-eth-lib provides a Web3.py middleware.  It will automatically intercept the relevant JSON-RPC
@@ -65,7 +71,7 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
 
 ## API
 
-### `get_accounts(dongle: Any = None)`
+### `get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH)`
 
 Fetch a `List` of accounts.
 
