@@ -3,7 +3,7 @@ import binascii
 from rlp import Serializable, encode
 from eth_utils import encode_hex, decode_hex
 
-from ledgereth.constants import DEFAULT_PATH_ENCODED
+from ledgereth.constants import LEGACY_ACCOUNTS, DEFAULT_PATH_ENCODED
 from ledgereth.comms import (
     init_dongle,
     chunks,
@@ -20,6 +20,34 @@ Text = Union[str, bytes]
 CHAIN_ID = 1
 DEFAULT_ACCOUNTS_FETCH = 1
 
+"""
+ACCOUNT DERIVATION ISSUES
+
+Derivation path debate is ever ongoing.  Ledger Live app uses opton #3 here.
+The old chrome app used #4.
+
+1) 44'/60'/0'/0/x
+2) 44'/60'/0'/x/0
+3) 44'/60'/x'/0/0
+4) 44'/60'/0'/x
+
+The Ledger Live account enumeration algo appears to be:
+
+1) Try legacy account X (if no balance, GOTO 3)
+2) X+1 and GOTO 1
+3) Try new-derivation Y (if no balance, RETURN)
+4) Y+1 and GOTO 3
+
+Since this library is trying not to resort to JSON-RPC calls, this algorithm is
+not usable, so it's either or, and it currently defaults to the newer
+derivation.
+
+To use legacy derivation, set the environment variable LEDGER_LEGACY_ACCOUNTS
+
+Ref (cannot find an authoritative source):
+https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
+"""
+
 
 def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH):
     """ Return available accounts """
@@ -30,14 +58,11 @@ def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH):
         response = dongle_send(dongle, 'GET_DEFAULT_ADDRESS_NO_CONFIRM')
         addresses.append(decode_response_address(response))
     else:
-        """
-        TODO: Verify path derivation is standard for ETH/ledger. Which one?
-        1) 44'/60'/0'/0/1
-        2) 44'/60'/0'/1/0
-        2) 44'/60'/1'/0/0
-        """
         for i in range(count):
-            path = parse_bip32_path("44'/60'/0'/0/{}".format(i))
+            if LEGACY_ACCOUNTS:
+                path = parse_bip32_path("44'/60'/0'/{}".format(i))
+            else:
+                path = parse_bip32_path("44'/60'/{}'/0/0".format(i))
             lc = len(path).to_bytes(1, 'big')
             data = (len(path) // 4).to_bytes(1, 'big') + path
             response = dongle_send_data(
