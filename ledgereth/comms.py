@@ -160,7 +160,7 @@ def is_usable_version(confbytes: bytes) -> bool:
     return True
 
 
-def init_dongle(dongle: Any = None):
+def init_dongle(dongle: Any = None, debug: bool = False):
     """ Initialize the dongle and sanity check the connection """
     global DONGLE_CACHE, DONGLE_CONFIG_CACHE
     dong = dongle
@@ -168,7 +168,7 @@ def init_dongle(dongle: Any = None):
     # If not given, use cache if available
     if dong is None:
         if DONGLE_CACHE is None:
-            DONGLE_CACHE = getDongle(True)
+            DONGLE_CACHE = getDongle(debug)
         dong = DONGLE_CACHE
 
     # Sanity check the version
