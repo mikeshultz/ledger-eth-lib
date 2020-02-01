@@ -8,6 +8,32 @@ interfacing with the Ledger nice and simple with well known Ethereum+Python tool
 
 **NOTE**: Tested to work on Ledger Nano S and Nano X.  Will probalby work with Ledger Blue
 
+**WARNING**: The Ledger apps have changed the way accounts are derived with the release of Ledger
+Live.  If you created your Ledger account(s) with the older Chrome app and want to use those
+account(s) with this library, you will need to set the `LEDGER_LEGACY_ACCOUNTS` env var. You can
+only use one or the other at a time.  See [the notes in source for more
+information](ledgereth/web3.py#L23).
+
+## Environment Configuration
+
+There are a couple of environment variables that can affect the behavior of ledger-eth-lib,
+documented below:
+
+- `MAX_ACCOUNTS_FETCH`[default: `5`]: The maximum accounts that will be fetched when looking up by
+address. If you created more than 5 accounts on your Ledger device, you may want to adjust this.
+- `LEDGER_LEGACY_ACCOUNTS`: If set (to anything), ledger-eth-lib will use the legacy Ledger bip32
+derivation that was used to create accounts **before Ledger Live**.
+
+## CLI Usage
+
+    python -m ledgereth [command]
+
+### Get Accounts
+
+To get the available accounts from your Ledger:
+
+    python -m ledgereth accounts
+
 ## Web3.py Integration
 
 ledger-eth-lib provides a Web3.py middleware.  It will automatically intercept the relevant JSON-RPC
@@ -26,15 +52,15 @@ calls and respond with data from your Ledger device.
 
 ### Get Accounts
 
-Fetch the availible accounts (currently only default).
+Fetch the availible accounts.
 
     from ledgereth import get_accounts
     accounts = get_accounts()
-    my_account = accounts[0]
+    my_account = accounts[0].address
 
 ### Create and Sign a Transaction
 
-Create a transaction object and sign it.
+Create a transaction object and sign it with the default account.
 
     from ledgereth import create_transaction
     tx = create_transaction(
@@ -43,7 +69,7 @@ Create a transaction object and sign it.
         int(1e18),  # value
         int(1e5),  # gas limit
         int(1e9),  # gas price
-        1  # nonce
+        1,  # nonce
     )
     signature = '0x{}{}{}'.format(
         hex(tx.v)[2:],
@@ -63,25 +89,8 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
         hex(tx.s)[2:],
     )
 
-## API
-
-### `get_accounts(dongle: Any = None)`
-
-Fetch a `List` of accounts.
-
-**NOTE**: This will currently only return the default/primary account from the device.
-
-### `sign_transaction(tx: Serializable, dongle: Any = None)`
-
-Sign a `rlp.Serializable` transaction.
-
-### `create_transaction(to: bytes, sender: bytes, value: int, gas: int, gas_price: int, nonce: int, data: bytes, dongle: Any = None)`
-
-Create and sign an `rlp.Serializable` transaction from provided params
-
 ## TODO
 
 - Add fake dongle support to pytest suite so tests can be run without a real Ledger and human interaction
 - Fill out tests
 - Add messaging signing support
-- Add support for multiple accounts(different derivations?)

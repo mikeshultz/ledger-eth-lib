@@ -1,7 +1,8 @@
 import rlp
 from rlp.sedes import big_endian_int, binary, Binary
+from eth_utils import to_normalized_address
 
-from ledgereth.utils import is_bytes
+from ledgereth.utils import is_bytes, is_bip32_path, parse_bip32_path
 
 
 class ISO7816Command:
@@ -51,6 +52,16 @@ class ISO7816Command:
 
     def encode_hex(self) -> str:
         return self.encode().hex()
+
+
+class LedgerAccount:
+    def __init__(self, path, address):
+        if not is_bip32_path(path):
+            raise ValueError('Invalid BIP32 Ethereum path')
+
+        self.path = path
+        self.path_encoded = parse_bip32_path(path)
+        self.address = to_normalized_address(address)
 
 
 class Transaction(rlp.Serializable):

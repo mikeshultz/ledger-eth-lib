@@ -1,105 +1,37 @@
-import sys
-import binascii
-from rlp import Serializable, encode
-from eth_utils import encode_hex, decode_hex
-
-from ledgereth.constants import DEFAULT_PATH_ENCODED
-from ledgereth.comms import init_dongle, chunks, dongle_send, dongle_send_data, decode_response_address
-from ledgereth.objects import Transaction, SignedTransaction
-from ledgereth.utils import is_hex_string
-
-from typing import Any, Union
-
-Text = Union[str, bytes]
-CHAIN_ID = 1
+from rlp import encode
+from eth_utils import encode_hex
+from ledgereth.objects import SignedTransaction
+from ledgereth.accounts import find_account, get_accounts
+from ledgereth.transactions import create_transaction
 
 
-def get_accounts(dongle: Any = None):
-    """ Return available accounts """
-    dongle = init_dongle(dongle)
+"""
+ACCOUNT DERIVATION ISSUES
 
-    # TODO: Support multiple accounts?
-    response = dongle_send(dongle, 'GET_DEFAULT_ADDRESS_NO_CONFIRM')
+Derivation path debate is ever ongoing.  Ledger Live app uses opton #3 here.
+The old chrome app used #4.
 
-    # Use a List for future support of multiple accounts
-    return [decode_response_address(response)]
+1) 44'/60'/0'/0/x
+2) 44'/60'/0'/x/0
+3) 44'/60'/x'/0/0
+4) 44'/60'/0'/x
 
+The Ledger Live account enumeration algo appears to be:
 
-def sign_transaction(tx: Serializable, dongle: Any = None):
-    """ Sign a transaction object (rlp.Serializable) """
-    dongle = init_dongle(dongle)
-    retval = None
+1) Try legacy account X (if no balance, GOTO 3)
+2) X+1 and GOTO 1
+3) Try new-derivation Y (if no balance, RETURN)
+4) Y+1 and GOTO 3
 
-    assert isinstance(tx, Transaction), "Only RLPTx transaction objects are currently supported"
-    print('tx: ', tx)
-    encoded_tx = encode(tx, Transaction)
-    payload = (len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, 'big') + DEFAULT_PATH_ENCODED + encoded_tx
+Since this library is trying not to resort to JSON-RPC calls, this algorithm is
+not usable, so it's either or, and it currently defaults to the newer
+derivation.
 
-    chunk_count = 0
-    for chunk in chunks(payload):
-        chunk_size = len(chunk)
-        if chunk_count == 0:
-            retval = dongle_send_data(
-                dongle,
-                'SIGN_TX_FIRST_DATA',
-                chunk,
-                Lc=chunk_size.to_bytes(1, 'big')
-            )
-        else:
-            retval = dongle_send_data(
-                dongle,
-                'SIGN_TX_SECONDARY_DATA',
-                chunk,
-                Lc=chunk_size.to_bytes(1, 'big')
-            )
-        chunk_count += 1
+To use legacy derivation, set the environment variable LEDGER_LEGACY_ACCOUNTS
 
-    if retval is None or len(retval) < 64:
-        raise Exception('Invalid response from Ledger')
-
-    if (CHAIN_ID*2 + 35) + 1 > 255:
-        ecc_parity = retval[0] - ((CHAIN_ID*2 + 35) % 256)
-        v = (CHAIN_ID*2 + 35) + ecc_parity
-    else:
-        v = retval[0]
-
-    r = int(binascii.hexlify(retval[1:33]), 16)
-    s = int(binascii.hexlify(retval[33:65]), 16)
-
-    return SignedTransaction(
-        nonce=tx.nonce,
-        gasprice=tx.gasprice,
-        startgas=tx.startgas,
-        to=tx.to,
-        value=tx.value,
-        data=tx.data,
-        v=v,
-        r=r,
-        s=s
-    )
-
-
-def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: int, data: Text,
-                       dongle: Any = None):
-    """ Create and sign a transaction from indiv args """
-    dongle = init_dongle(dongle)
-
-    if not is_hex_string(data):
-        data = decode_hex(data) or b''
-
-    # Create a serializable tx object
-    tx = Transaction(
-        # to=decode_hex(address),
-        to=decode_hex(to),
-        #value=hex(value),
-        value=value,
-        startgas=gas,
-        gasprice=gas_price,
-        data=data,
-        nonce=nonce,
-    )
-
-    return sign_transaction(tx, dongle=dongle)
+Ref (cannot find an authoritative source):
+https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
+"""
 
 
 class LedgerSignerMiddleware:
@@ -111,6 +43,17 @@ class LedgerSignerMiddleware:
         if method == 'eth_sendTransaction':
             new_params = []
             for tx_obj in params:
+                sender_address = tx_obj.get('from')
+
+                if not sender_address:
+                    # TODO: Should this use a default?
+                    raise ValueError('"from" field not provided')
+
+                sender_account = find_account(sender_address)
+
+                if not sender_account:
+                    raise Exception('Account {} not found'.format(sender_address))
+
                 raw_tx = create_transaction(
                     to=tx_obj.get('to'),
                     value=tx_obj.get('value'),
@@ -118,6 +61,7 @@ class LedgerSignerMiddleware:
                     gas_price=tx_obj.get('gasPrice'),
                     nonce=tx_obj.get('nonce'),
                     data=tx_obj.get('data', ''),
+                    sender_path=sender_account.path,
                 )
                 new_params.append(encode_hex(encode(raw_tx, SignedTransaction)))
 
@@ -129,7 +73,7 @@ class LedgerSignerMiddleware:
             return {
               "id": 1,
               "jsonrpc": "2.0",
-              "result": get_accounts()
+              "result": list(map(lambda a: a.address, get_accounts()))
             }
 
         elif method == 'eth_sign':

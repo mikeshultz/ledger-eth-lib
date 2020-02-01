@@ -12,9 +12,11 @@ from ledgereth.comms import (
     decode_response_address,
     decode_response_version_from_config,
 )
+from ledgereth.utils import parse_bip32_path
 
 GET_CONFIGURATION = 'GET_CONFIGURATION'
 GET_DEFAULT_ADDRESS_NO_CONFIRM = 'GET_DEFAULT_ADDRESS_NO_CONFIRM'
+GET_ADDRESS_NO_CONFIRM = 'GET_ADDRESS_NO_CONFIRM'
 SIGN_TX_FIRST_DATA = 'SIGN_TX_FIRST_DATA'
 
 
@@ -42,6 +44,31 @@ def test_comms_account(yield_dongle):
         assert type(address) == str
         assert len(address) == 42
         assert address.startswith('0x')
+
+
+def test_comms_multiple_accounts(yield_dongle):
+    addresses = []
+    with yield_dongle() as dongle:
+        for i in range(5):
+            path = parse_bip32_path("44'/60'/0'/0/{}".format(i))
+            lc = len(path).to_bytes(1, 'big')
+            data = (len(path) // 4).to_bytes(1, 'big') + path
+            resp = dongle_send_data(
+                dongle,
+                GET_ADDRESS_NO_CONFIRM,
+                data,
+                Lc=lc
+            )
+
+            assert type(resp) == bytearray
+
+            address = decode_response_address(resp)
+
+            assert type(address) == str
+            assert len(address) == 42
+            assert address.startswith('0x')
+            assert address not in addresses
+            addresses.append(address)
 
 
 def test_comms_sign_small_tx(yield_dongle):
