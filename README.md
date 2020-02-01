@@ -20,9 +20,9 @@ There are a couple of environment variables that can affect the behavior of ledg
 documented below:
 
 - `MAX_ACCOUNTS_FETCH`[default: `5`]: The maximum accounts that will be fetched when looking up by
-address
+address. If you created more than 5 accounts on your Ledger device, you may want to adjust this.
 - `LEDGER_LEGACY_ACCOUNTS`: If set (to anything), ledger-eth-lib will use the legacy Ledger bip32
-derivation that was used for accounts **before Ledger Live**.
+derivation that was used to create accounts **before Ledger Live**.
 
 ## CLI Usage
 
