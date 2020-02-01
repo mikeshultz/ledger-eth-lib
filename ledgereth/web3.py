@@ -1,26 +1,9 @@
-import binascii
-from rlp import Serializable, encode
-from eth_utils import encode_hex, decode_hex, to_normalized_address
+from rlp import encode
+from eth_utils import encode_hex
+from ledgereth.objects import SignedTransaction
+from ledgereth.accounts import find_account, get_accounts
+from ledgereth.transactions import create_transaction
 
-from ledgereth.constants import (
-    CHAIN_ID,
-    LEGACY_ACCOUNTS,
-    DEFAULT_PATH_STRING,
-    DEFAULT_ACCOUNTS_FETCH,
-    MAX_ACCOUNTS_FETCH,
-)
-from ledgereth.comms import (
-    init_dongle,
-    chunks,
-    dongle_send_data,
-    decode_response_address,
-)
-from ledgereth.objects import LedgerAccount, Transaction, SignedTransaction
-from ledgereth.utils import is_hex_string, parse_bip32_path, is_bip32_path
-
-from typing import Any, Optional, Union, List
-
-Text = Union[str, bytes]
 
 """
 ACCOUNT DERIVATION ISSUES
@@ -49,132 +32,6 @@ To use legacy derivation, set the environment variable LEDGER_LEGACY_ACCOUNTS
 Ref (cannot find an authoritative source):
 https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 """
-
-
-def get_account_by_path(path_string: str, dongle: Any = None) -> LedgerAccount:
-    """ Return an account for a specific BIP32 derivation path """
-    dongle = init_dongle(dongle)
-    path = parse_bip32_path(path_string)
-    lc = len(path).to_bytes(1, 'big')
-    data = (len(path) // 4).to_bytes(1, 'big') + path
-    response = dongle_send_data(
-        dongle,
-        'GET_ADDRESS_NO_CONFIRM',
-        data,
-        Lc=lc
-    )
-    return LedgerAccount(path_string, decode_response_address(response))
-
-
-def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH) -> List[LedgerAccount]:
-    """ Return available accounts """
-    accounts = []
-    dongle = init_dongle(dongle)
-
-    for i in range(count):
-        if LEGACY_ACCOUNTS:
-            path_string = "44'/60'/0'/{}".format(i)
-        else:
-            path_string = "44'/60'/{}'/0/0".format(i)
-        account = get_account_by_path(path_string, dongle)
-        accounts.append(account)
-
-    return accounts
-
-
-def find_account(address: str, dongle: Any = None,
-                 count: int = MAX_ACCOUNTS_FETCH) -> Optional[LedgerAccount]:
-    """ Find an account by address """
-
-    address = to_normalized_address(address)
-
-    for account in get_accounts(dongle, count):
-        if account.address == address:
-            return account
-
-    return None
-
-
-def sign_transaction(tx: Serializable, sender_path: str = DEFAULT_PATH_STRING,
-                     dongle: Any = None) -> SignedTransaction:
-    """ Sign a transaction object (rlp.Serializable) """
-    dongle = init_dongle(dongle)
-    retval = None
-
-    assert isinstance(tx, Transaction), "Only Transaction objects are currently supported"
-    print('tx: ', tx)
-    encoded_tx = encode(tx, Transaction)
-
-    if not is_bip32_path(sender_path):
-        raise ValueError('Invalid sender BIP32 path given to sign_transaction')
-
-    path = parse_bip32_path(sender_path)
-    payload = (len(path) // 4).to_bytes(1, 'big') + path + encoded_tx
-
-    chunk_count = 0
-    for chunk in chunks(payload):
-        chunk_size = len(chunk)
-        if chunk_count == 0:
-            retval = dongle_send_data(
-                dongle,
-                'SIGN_TX_FIRST_DATA',
-                chunk,
-                Lc=chunk_size.to_bytes(1, 'big')
-            )
-        else:
-            retval = dongle_send_data(
-                dongle,
-                'SIGN_TX_SECONDARY_DATA',
-                chunk,
-                Lc=chunk_size.to_bytes(1, 'big')
-            )
-        chunk_count += 1
-
-    if retval is None or len(retval) < 64:
-        raise Exception('Invalid response from Ledger')
-
-    if (CHAIN_ID*2 + 35) + 1 > 255:
-        ecc_parity = retval[0] - ((CHAIN_ID*2 + 35) % 256)
-        v = (CHAIN_ID*2 + 35) + ecc_parity
-    else:
-        v = retval[0]
-
-    r = int(binascii.hexlify(retval[1:33]), 16)
-    s = int(binascii.hexlify(retval[33:65]), 16)
-
-    return SignedTransaction(
-        nonce=tx.nonce,
-        gasprice=tx.gasprice,
-        startgas=tx.startgas,
-        to=tx.to,
-        value=tx.value,
-        data=tx.data,
-        v=v,
-        r=r,
-        s=s
-    )
-
-
-def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: int, data: Text,
-                       sender_path: str = DEFAULT_PATH_STRING,
-                       dongle: Any = None) -> SignedTransaction:
-    """ Create and sign a transaction from indiv args """
-    dongle = init_dongle(dongle)
-
-    if not is_hex_string(data):
-        data = decode_hex(data) or b''
-
-    # Create a serializable tx object
-    tx = Transaction(
-        to=decode_hex(to),
-        value=value,
-        startgas=gas,
-        gasprice=gas_price,
-        data=data,
-        nonce=nonce,
-    )
-
-    return sign_transaction(tx, sender_path, dongle=dongle)
 
 
 class LedgerSignerMiddleware:
