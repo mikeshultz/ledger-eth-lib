@@ -52,15 +52,15 @@ calls and respond with data from your Ledger device.
 
 ### Get Accounts
 
-Fetch the availible accounts (currently only default).
+Fetch the availible accounts.
 
     from ledgereth import get_accounts
     accounts = get_accounts()
-    my_account = accounts[0]
+    my_account = accounts[0].address
 
 ### Create and Sign a Transaction
 
-Create a transaction object and sign it.
+Create a transaction object and sign it with the default account.
 
     from ledgereth import create_transaction
     tx = create_transaction(
@@ -89,25 +89,8 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
         hex(tx.s)[2:],
     )
 
-## API
-
-### `get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH)`
-
-Fetch a `List` of accounts.
-
-**NOTE**: This will currently only return the default/primary account from the device.
-
-### `sign_transaction(tx: Serializable, dongle: Any = None)`
-
-Sign a `rlp.Serializable` transaction.
-
-### `create_transaction(to: bytes, sender: bytes, value: int, gas: int, gas_price: int, nonce: int, data: bytes, dongle: Any = None)`
-
-Create and sign an `rlp.Serializable` transaction from provided params
-
 ## TODO
 
 - Add fake dongle support to pytest suite so tests can be run without a real Ledger and human interaction
 - Fill out tests
 - Add messaging signing support
-- Add support for multiple accounts(different derivations?)
