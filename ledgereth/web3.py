@@ -3,7 +3,7 @@ import binascii
 from rlp import Serializable, encode
 from eth_utils import encode_hex, decode_hex
 
-from ledgereth.constants import LEGACY_ACCOUNTS, DEFAULT_PATH_ENCODED
+from ledgereth.constants import LEGACY_ACCOUNTS, DEFAULT_PATH_STRING, DEFAULT_PATH_ENCODED
 from ledgereth.comms import (
     init_dongle,
     chunks,
@@ -11,8 +11,8 @@ from ledgereth.comms import (
     dongle_send_data,
     decode_response_address,
 )
-from ledgereth.objects import Transaction, SignedTransaction
-from ledgereth.utils import is_hex_string, parse_bip32_path
+from ledgereth.objects import LedgerAccount, Transaction, SignedTransaction
+from ledgereth.utils import is_hex_string, parse_bip32_path, is_bip32_path
 
 from typing import Any, Union
 
@@ -49,33 +49,38 @@ https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 """
 
 
+def get_account_by_path(path_string: str, dongle: Any = None):
+    """ Return an account for a specific BIP32 derivation path """
+    dongle = init_dongle(dongle)
+    path = parse_bip32_path(path_string)
+    lc = len(path).to_bytes(1, 'big')
+    data = (len(path) // 4).to_bytes(1, 'big') + path
+    response = dongle_send_data(
+        dongle,
+        'GET_ADDRESS_NO_CONFIRM',
+        data,
+        Lc=lc
+    )
+    return LedgerAccount(path_string, decode_response_address(response))
+
+
 def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH):
     """ Return available accounts """
-    addresses = []
+    accounts = []
     dongle = init_dongle(dongle)
 
-    if count == 1:
-        response = dongle_send(dongle, 'GET_DEFAULT_ADDRESS_NO_CONFIRM')
-        addresses.append(decode_response_address(response))
-    else:
-        for i in range(count):
-            if LEGACY_ACCOUNTS:
-                path = parse_bip32_path("44'/60'/0'/{}".format(i))
-            else:
-                path = parse_bip32_path("44'/60'/{}'/0/0".format(i))
-            lc = len(path).to_bytes(1, 'big')
-            data = (len(path) // 4).to_bytes(1, 'big') + path
-            response = dongle_send_data(
-                dongle,
-                'GET_ADDRESS_NO_CONFIRM',
-                data,
-                Lc=lc
-            )
-            addresses.append(decode_response_address(response))
-    return addresses
+    for i in range(count):
+        if LEGACY_ACCOUNTS:
+            path_string = "44'/60'/0'/{}".format(i)
+        else:
+            path_string = "44'/60'/{}'/0/0".format(i)
+        account = get_account_by_path(path_string, dongle)
+        accounts.append(account)
+
+    return accounts
 
 
-def sign_transaction(tx: Serializable, dongle: Any = None):
+def sign_transaction(tx: Serializable, sender_path: str = DEFAULT_PATH_STRING, dongle: Any = None):
     """ Sign a transaction object (rlp.Serializable) """
     dongle = init_dongle(dongle)
     retval = None
@@ -83,7 +88,12 @@ def sign_transaction(tx: Serializable, dongle: Any = None):
     assert isinstance(tx, Transaction), "Only RLPTx transaction objects are currently supported"
     print('tx: ', tx)
     encoded_tx = encode(tx, Transaction)
-    payload = (len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, 'big') + DEFAULT_PATH_ENCODED + encoded_tx
+
+    if not is_bip32_path(sender_path):
+        raise ValueError('Invalid sender BIP32 path given to sign_transaction')
+
+    path = parse_bip32_path(sender_path)
+    payload = (len(path) // 4).to_bytes(1, 'big') + path + encoded_tx
 
     chunk_count = 0
     for chunk in chunks(payload):
@@ -130,7 +140,7 @@ def sign_transaction(tx: Serializable, dongle: Any = None):
 
 
 def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: int, data: Text,
-                       dongle: Any = None):
+                       sender_path: str = DEFAULT_PATH_STRING, dongle: Any = None):
     """ Create and sign a transaction from indiv args """
     dongle = init_dongle(dongle)
 
@@ -149,7 +159,7 @@ def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: i
         nonce=nonce,
     )
 
-    return sign_transaction(tx, dongle=dongle)
+    return sign_transaction(sender_path, tx, dongle=dongle)
 
 
 class LedgerSignerMiddleware:

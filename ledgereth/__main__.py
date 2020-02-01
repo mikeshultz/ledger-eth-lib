@@ -1,6 +1,6 @@
 import sys
 import argparse
-from ledgereth import get_accounts
+from ledgereth import get_account_by_path, get_accounts
 from ledgereth.comms import init_dongle
 
 
@@ -13,6 +13,8 @@ def get_args(argv):
                                        help='Available commands')
 
     accounts_parser = subparsers.add_parser('accounts', help="Print accounts from the Ledger")
+    accounts_parser.add_argument('path', metavar='PATH', type=str, nargs='?',
+                                 help='Get the account for a specific path')
     accounts_parser.add_argument('-c', '--count', type=int, default=3,
                                  help='How many accounts to fetch (default: 3)')
     return parser.parse_args(argv)
@@ -20,11 +22,14 @@ def get_args(argv):
 
 def print_accounts(dongle, args):
     i = 0
-    accounts = get_accounts(dongle, count=args.count)
-    for a in accounts:
-        # TODO: Addd balance printer?
-        i += 1
-        print('Account {}: {}'.format(i, a))
+    if args.path:
+        account = get_account_by_path(args.path, dongle)
+        print('Account {} {}'.format(account.path, account.address))
+    else:
+        accounts = get_accounts(dongle, count=args.count)
+        for a in accounts:
+            i += 1
+            print('Account {}: {} {}'.format(i, a.path, a.address))
 
 
 COMMANDS = {
