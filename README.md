@@ -14,6 +14,26 @@ account(s) with this library, you will need to set the `LEDGER_LEGACY_ACCOUNTS` 
 only use one or the other at a time.  See [the notes in source for more
 information](blob/master/ledgereth/web3.py#L23).
 
+## Environment Configuration
+
+There are a couple of environment variables that can affect the behavior of ledger-eth-lib,
+documented below:
+
+- `MAX_ACCOUNTS_FETCH`[default: `5`]: The maximum accounts that will be fetched when looking up by
+address
+- `LEDGER_LEGACY_ACCOUNTS`: If set (to anything), ledger-eth-lib will use the legacy Ledger bip32
+derivation that was used for accounts **before Ledger Live**.
+
+## CLI Usage
+
+    python -m ledgereth [command]
+
+### Get Accounts
+
+To get the available accounts from your Ledger:
+
+    python -m ledgereth accounts
+
 ## Web3.py Integration
 
 ledger-eth-lib provides a Web3.py middleware.  It will automatically intercept the relevant JSON-RPC
@@ -49,7 +69,7 @@ Create a transaction object and sign it.
         int(1e18),  # value
         int(1e5),  # gas limit
         int(1e9),  # gas price
-        1  # nonce
+        1,  # nonce
     )
     signature = '0x{}{}{}'.format(
         hex(tx.v)[2:],

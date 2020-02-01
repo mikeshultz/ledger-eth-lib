@@ -1,24 +1,26 @@
-import sys
 import binascii
 from rlp import Serializable, encode
-from eth_utils import encode_hex, decode_hex
+from eth_utils import encode_hex, decode_hex, to_normalized_address
 
-from ledgereth.constants import LEGACY_ACCOUNTS, DEFAULT_PATH_STRING, DEFAULT_PATH_ENCODED
+from ledgereth.constants import (
+    CHAIN_ID,
+    LEGACY_ACCOUNTS,
+    DEFAULT_PATH_STRING,
+    DEFAULT_ACCOUNTS_FETCH,
+    MAX_ACCOUNTS_FETCH,
+)
 from ledgereth.comms import (
     init_dongle,
     chunks,
-    dongle_send,
     dongle_send_data,
     decode_response_address,
 )
 from ledgereth.objects import LedgerAccount, Transaction, SignedTransaction
 from ledgereth.utils import is_hex_string, parse_bip32_path, is_bip32_path
 
-from typing import Any, Union
+from typing import Any, Optional, Union, List
 
 Text = Union[str, bytes]
-CHAIN_ID = 1
-DEFAULT_ACCOUNTS_FETCH = 1
 
 """
 ACCOUNT DERIVATION ISSUES
@@ -49,7 +51,7 @@ https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 """
 
 
-def get_account_by_path(path_string: str, dongle: Any = None):
+def get_account_by_path(path_string: str, dongle: Any = None) -> LedgerAccount:
     """ Return an account for a specific BIP32 derivation path """
     dongle = init_dongle(dongle)
     path = parse_bip32_path(path_string)
@@ -64,7 +66,7 @@ def get_account_by_path(path_string: str, dongle: Any = None):
     return LedgerAccount(path_string, decode_response_address(response))
 
 
-def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH):
+def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH) -> List[LedgerAccount]:
     """ Return available accounts """
     accounts = []
     dongle = init_dongle(dongle)
@@ -80,12 +82,26 @@ def get_accounts(dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH):
     return accounts
 
 
-def sign_transaction(tx: Serializable, sender_path: str = DEFAULT_PATH_STRING, dongle: Any = None):
+def find_account(address: str, dongle: Any = None,
+                 count: int = MAX_ACCOUNTS_FETCH) -> Optional[LedgerAccount]:
+    """ Find an account by address """
+
+    address = to_normalized_address(address)
+
+    for account in get_accounts(dongle, count):
+        if account.address == address:
+            return account
+
+    return None
+
+
+def sign_transaction(tx: Serializable, sender_path: str = DEFAULT_PATH_STRING,
+                     dongle: Any = None) -> SignedTransaction:
     """ Sign a transaction object (rlp.Serializable) """
     dongle = init_dongle(dongle)
     retval = None
 
-    assert isinstance(tx, Transaction), "Only RLPTx transaction objects are currently supported"
+    assert isinstance(tx, Transaction), "Only Transaction objects are currently supported"
     print('tx: ', tx)
     encoded_tx = encode(tx, Transaction)
 
@@ -140,7 +156,8 @@ def sign_transaction(tx: Serializable, sender_path: str = DEFAULT_PATH_STRING, d
 
 
 def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: int, data: Text,
-                       sender_path: str = DEFAULT_PATH_STRING, dongle: Any = None):
+                       sender_path: str = DEFAULT_PATH_STRING,
+                       dongle: Any = None) -> SignedTransaction:
     """ Create and sign a transaction from indiv args """
     dongle = init_dongle(dongle)
 
@@ -149,9 +166,7 @@ def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: i
 
     # Create a serializable tx object
     tx = Transaction(
-        # to=decode_hex(address),
         to=decode_hex(to),
-        #value=hex(value),
         value=value,
         startgas=gas,
         gasprice=gas_price,
@@ -159,7 +174,7 @@ def create_transaction(to: bytes, value: int, gas: int, gas_price: int, nonce: i
         nonce=nonce,
     )
 
-    return sign_transaction(sender_path, tx, dongle=dongle)
+    return sign_transaction(tx, sender_path, dongle=dongle)
 
 
 class LedgerSignerMiddleware:
@@ -171,6 +186,17 @@ class LedgerSignerMiddleware:
         if method == 'eth_sendTransaction':
             new_params = []
             for tx_obj in params:
+                sender_address = tx_obj.get('from')
+
+                if not sender_address:
+                    # TODO: Should this use a default?
+                    raise ValueError('"from" field not provided')
+
+                sender_account = find_account(sender_address)
+
+                if not sender_account:
+                    raise Exception('Account {} not found'.format(sender_address))
+
                 raw_tx = create_transaction(
                     to=tx_obj.get('to'),
                     value=tx_obj.get('value'),
@@ -178,6 +204,7 @@ class LedgerSignerMiddleware:
                     gas_price=tx_obj.get('gasPrice'),
                     nonce=tx_obj.get('nonce'),
                     data=tx_obj.get('data', ''),
+                    sender_path=sender_account.path,
                 )
                 new_params.append(encode_hex(encode(raw_tx, SignedTransaction)))
 
@@ -189,7 +216,7 @@ class LedgerSignerMiddleware:
             return {
               "id": 1,
               "jsonrpc": "2.0",
-              "result": get_accounts()
+              "result": list(map(lambda a: a.address, get_accounts()))
             }
 
         elif method == 'eth_sign':

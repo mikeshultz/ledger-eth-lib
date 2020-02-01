@@ -37,3 +37,13 @@ def parse_bip32_path(path: str) -> bytes:
         else:
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
+
+
+def get_int_from_dict(d: Any, k: Any, default: int = None):
+    """ Get an int from a dict-like object """
+    if not hasattr(d, 'get'):
+        raise ValueError('Object given to get_int_from_dict is not dict-like')
+    v = d.get(k)
+    if v:
+        return v
+    return default
