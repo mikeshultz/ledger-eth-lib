@@ -44,6 +44,7 @@ class LedgerSignerMiddleware:
             new_params = []
             for tx_obj in params:
                 sender_address = tx_obj.get('from')
+                nonce = tx_obj.get('nonce')
 
                 if not sender_address:
                     # TODO: Should this use a default?
@@ -54,15 +55,19 @@ class LedgerSignerMiddleware:
                 if not sender_account:
                     raise Exception('Account {} not found'.format(sender_address))
 
+                if nonce is None:
+                    nonce = self.w3.eth.getTransactionCount(sender_address)
+
                 raw_tx = create_transaction(
                     to=tx_obj.get('to'),
                     value=tx_obj.get('value'),
                     gas=tx_obj.get('gas'),
                     gas_price=tx_obj.get('gasPrice'),
-                    nonce=tx_obj.get('nonce'),
+                    nonce=nonce,
                     data=tx_obj.get('data', ''),
                     sender_path=sender_account.path,
                 )
+
                 new_params.append(encode_hex(encode(raw_tx, SignedTransaction)))
 
             # Change to raw tx call
