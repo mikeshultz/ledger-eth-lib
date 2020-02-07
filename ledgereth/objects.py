@@ -1,6 +1,7 @@
 import rlp
+from eth_utils import encode_hex
 from rlp.sedes import big_endian_int, binary, Binary
-from eth_utils import to_normalized_address
+from eth_utils import to_checksum_address
 
 from ledgereth.utils import is_bytes, is_bip32_path, parse_bip32_path
 
@@ -61,7 +62,7 @@ class LedgerAccount:
 
         self.path = path
         self.path_encoded = parse_bip32_path(path)
-        self.address = to_normalized_address(address)
+        self.address = to_checksum_address(address)
 
 
 class Transaction(rlp.Serializable):
@@ -112,6 +113,11 @@ class SignedTransaction(rlp.Serializable):
         for name, _ in self.__class__._meta.fields:
             d[name] = getattr(self, name)
         return d
+
+    def raw_transaction(self):
+        return encode_hex(rlp.encode(self, SignedTransaction))
+    # Match the API of the web3.py Transaction object
+    rawTransaction = property(raw_transaction)
 
 
 # Compat: Depreciated

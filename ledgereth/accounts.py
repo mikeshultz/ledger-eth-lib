@@ -1,4 +1,4 @@
-from eth_utils import to_normalized_address
+from eth_utils import to_checksum_address
 
 from ledgereth.constants import (
     LEGACY_ACCOUNTS,
@@ -51,7 +51,7 @@ def find_account(address: str, dongle: Any = None,
                  count: int = MAX_ACCOUNTS_FETCH) -> Optional[LedgerAccount]:
     """ Find an account by address """
 
-    address = to_normalized_address(address)
+    address = to_checksum_address(address)
 
     for account in get_accounts(dongle, count):
         if account.address == address:
