@@ -5,8 +5,8 @@ from typing import Any
 
 
 # 44'/60'/0'/0/x
-BIP32_ETH_PATTERN = r"^44\'\/60\'\/[0-9]\'\/[0-9]\/[0-9]$"
-BIP32_LEGACY_LEDGER_PATTERN = r"^44\'\/60\'\/[0-9]\'\/[0-9]$"
+BIP32_ETH_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+/[0-9]+$"
+BIP32_LEGACY_LEDGER_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+$"
 
 
 def is_bytes(v: Any) -> bool:
