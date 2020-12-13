@@ -85,7 +85,7 @@ def translate_exception(exp: Exception) -> Exception:
         return Exception('Ledger Nano not found')
     elif '6804' in string_err:
         return Exception('Ledger appears to be locked?')
-    elif any([x in string_err for x in ['6700', '6d00']]):
+    elif any(x in string_err for x in ['6700', '6d00']):
         return Exception('Please open the Ethereum app on your Ledger device')
     elif '6a80' in string_err:
         return Exception(
@@ -109,25 +109,22 @@ def dongle_send_data(dongle, command_string: str, data: bytes, Lc: bytes = None,
                      Le: bytes = None) -> bytes:
     """ Send a command with data to the dongle """
     hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)
-    retval = None
     try:
-        retval = dongle.exchange(hex_command)
+        return dongle.exchange(hex_command)
     except CommException as err:
         raise translate_exception(err)
-    return retval
 
 
 def chunks(it: bytes, chunk_size: int = 255):
     """ Iterate bytes(it) into chunks of chunk_size """
-    assert type(it) == bytes
+    assert isinstance(it, bytes)
 
     it_size = len(it)
 
     if it_size <= chunk_size:
         yield it
     else:
-        chunk_count = it_size // chunk_size
-        remainder = it_size % chunk_size
+        chunk_count, remainder = divmod(it_size, chunk_size)
         for i in range(0, chunk_count, chunk_size):
             yield it[i:i + chunk_size]
         final_offset = chunk_count * chunk_size
@@ -154,10 +151,8 @@ def is_usable_version(confbytes: bytes) -> bool:
     """ Only tested on 1.2.4 """
     version = decode_response_version_from_config(confbytes)
     v_parts = version.split('.')
-    ver = list(map(int, v_parts))
-    if ver[0] != 1 or ver[1] < 2 or ver[2] < 4:
-        return False
-    return True
+    ver = [int(s) for s in v_parts]
+    return not any([ver[0] != 1, ver[1] < 2, ver[2] < 4])
 
 
 def init_dongle(dongle: Any = None, debug: bool = False):
