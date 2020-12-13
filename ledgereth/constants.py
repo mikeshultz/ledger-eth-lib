@@ -14,7 +14,7 @@ DEFAULT_ACCOUNTS_FETCH = 1
 MAX_ACCOUNTS_FETCH = get_int_from_dict(os.environ, 'MAX_ACCOUNTS_FETCH', 5)
 
 # Whether to use the legacy bip32 path derivation used by Ledger Chrome app
-LEGACY_ACCOUNTS = os.environ.get('LEDGER_LEGACY_ACCOUNTS') is not None
+LEGACY_ACCOUNTS = os.getenv('LEDGER_LEGACY_ACCOUNTS') is not None
 
 DEFAULT_PATH_STRING = "44'/60'/0'/0/0"
 DEFAULT_PATH_ENCODED = parse_bip32_path(DEFAULT_PATH_STRING)

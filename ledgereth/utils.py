@@ -10,11 +10,11 @@ BIP32_LEGACY_LEDGER_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+$"
 
 
 def is_bytes(v: Any) -> bool:
-    return type(v) == bytes
+    return isinstance(v, bytes)
 
 
 def is_hex_string(v: Any) -> bool:
-    return type(v) == 'str' and v.startswith('0x')
+    return isinstance(v, str) and v.startswith('0x')
 
 
 def is_bip32_path(path: str) -> bool:
@@ -26,7 +26,7 @@ def is_bip32_path(path: str) -> bool:
 
 
 def parse_bip32_path(path: str) -> bytes:
-    if len(path) == 0:
+    if not path:
         return b""
     result = b""
     elements = path.split('/')
@@ -43,7 +43,5 @@ def get_int_from_dict(d: Any, k: Any, default: int = None):
     """ Get an int from a dict-like object """
     if not hasattr(d, 'get'):
         raise ValueError('Object given to get_int_from_dict is not dict-like')
-    v = d.get(k)
-    if v:
-        return v
-    return default
+    return d.get(k) or default
+
