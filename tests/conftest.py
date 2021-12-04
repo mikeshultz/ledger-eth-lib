@@ -5,7 +5,6 @@ import pytest
 from ledgerblue.comm import getDongle
 
 USE_REAL_DONGLE = os.environ.get("USE_REAL_DONGLE") is not None
-DONGLE = None
 
 
 class MockDongle:
@@ -24,10 +23,8 @@ def getMockDongle():
 
 @pytest.fixture
 def yield_dongle():
-    global DONGLE
     @contextmanager
     def yield_yield_dongle():
-        global DONGLE
         if USE_REAL_DONGLE:
             dongle = getDongle(True)
             yield dongle
