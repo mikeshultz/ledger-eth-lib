@@ -1,14 +1,21 @@
 import rlp
-from eth_utils import encode_hex
-from rlp.sedes import big_endian_int, binary, Binary
-from eth_utils import to_checksum_address
+from eth_utils import encode_hex, to_checksum_address
+from rlp.sedes import Binary, big_endian_int, binary
 
-from ledgereth.utils import is_bytes, is_bip32_path, parse_bip32_path
+from ledgereth.utils import is_bip32_path, is_bytes, parse_bip32_path
 
 
 class ISO7816Command:
-    def __init__(self, CLA: bytes, INS: bytes, P1: bytes, P2: bytes, Lc: bytes = None,
-                 Le: bytes = None, data: bytes = None):
+    def __init__(
+        self,
+        CLA: bytes,
+        INS: bytes,
+        P1: bytes,
+        P2: bytes,
+        Lc: bytes = None,
+        Le: bytes = None,
+        data: bytes = None,
+    ):
         try:
             assert is_bytes(CLA)
             assert is_bytes(INS)
@@ -24,7 +31,7 @@ class ISO7816Command:
         self.INS = INS
         self.P1 = P1
         self.P2 = P2
-        self.Lc = Lc or b'\x00'
+        self.Lc = Lc or b"\x00"
         self.Le = Le
         self.data = data
 
@@ -34,7 +41,7 @@ class ISO7816Command:
             # TODO: Warning?
             return
         if Lc is None:
-            self.Lc = len(self.data).to_bytes(1, 'big')
+            self.Lc = len(self.data).to_bytes(1, "big")
         else:
             self.Lc = Lc
 
@@ -42,7 +49,7 @@ class ISO7816Command:
         encoded = self.CLA + self.INS + self.P1 + self.P2
         if self.data is not None:
             if self.Lc is None:
-                self.Lc = (len(self.data)).to_bytes(1, 'big')
+                self.Lc = (len(self.data)).to_bytes(1, "big")
             encoded += self.Lc
             encoded += self.data
         else:
@@ -58,7 +65,7 @@ class ISO7816Command:
 class LedgerAccount:
     def __init__(self, path, address):
         if not is_bip32_path(path):
-            raise ValueError('Invalid BIP32 Ethereum path')
+            raise ValueError("Invalid BIP32 Ethereum path")
 
         self.path = path
         self.path_encoded = parse_bip32_path(path)
@@ -67,15 +74,17 @@ class LedgerAccount:
 
 class Transaction(rlp.Serializable):
     fields = [
-        ('nonce', big_endian_int),
-        ('gasprice', big_endian_int),
-        ('startgas', big_endian_int),
-        ('to', Binary.fixed_length(20, allow_empty=True)),
-        ('value', big_endian_int),
-        ('data', binary),
+        ("nonce", big_endian_int),
+        ("gasprice", big_endian_int),
+        ("startgas", big_endian_int),
+        ("to", Binary.fixed_length(20, allow_empty=True)),
+        ("value", big_endian_int),
+        ("data", binary),
     ]
 
-    def __init__(self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str):
+    def __init__(
+        self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str
+    ):
         super(RLPTx, self).__init__(nonce, gasprice, startgas, to, value, data)
 
     def sender(self, value: str) -> None:
@@ -90,20 +99,30 @@ class Transaction(rlp.Serializable):
 
 class SignedTransaction(rlp.Serializable):
     fields = [
-        ('nonce', big_endian_int),
-        ('gasprice', big_endian_int),
-        ('startgas', big_endian_int),
-        ('to', Binary.fixed_length(20, allow_empty=True)),
-        ('value', big_endian_int),
-        ('data', binary),
-        ('v', big_endian_int),
-        ('r', big_endian_int),
-        ('s', big_endian_int),
+        ("nonce", big_endian_int),
+        ("gasprice", big_endian_int),
+        ("startgas", big_endian_int),
+        ("to", Binary.fixed_length(20, allow_empty=True)),
+        ("value", big_endian_int),
+        ("data", binary),
+        ("v", big_endian_int),
+        ("r", big_endian_int),
+        ("s", big_endian_int),
     ]
 
-    def __init__(self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str,
-                 v: int, r: int, s: int):
-        super(SignedTransaction, self).__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
+    def __init__(
+        self,
+        nonce: int,
+        gasprice: int,
+        startgas: int,
+        to: bytes,
+        value: int,
+        data: str,
+        v: int,
+        r: int,
+        s: int,
+    ):
+        super().__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
 
     def sender(self, value: str) -> None:
         self._sender = value
@@ -116,6 +135,7 @@ class SignedTransaction(rlp.Serializable):
 
     def raw_transaction(self):
         return encode_hex(rlp.encode(self, SignedTransaction))
+
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
 

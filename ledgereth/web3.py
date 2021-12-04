@@ -1,9 +1,9 @@
-from rlp import encode
 from eth_utils import encode_hex
-from ledgereth.objects import SignedTransaction
-from ledgereth.accounts import find_account, get_accounts
-from ledgereth.transactions import create_transaction
+from rlp import encode
 
+from ledgereth.accounts import find_account, get_accounts
+from ledgereth.objects import SignedTransaction
+from ledgereth.transactions import create_transaction
 
 """
 ACCOUNT DERIVATION ISSUES
@@ -40,11 +40,11 @@ class LedgerSignerMiddleware:
         self.make_request = make_request
 
     def __call__(self, method, params):
-        if method == 'eth_sendTransaction':
+        if method == "eth_sendTransaction":
             new_params = []
             for tx_obj in params:
-                sender_address = tx_obj.get('from')
-                nonce = tx_obj.get('nonce')
+                sender_address = tx_obj.get("from")
+                nonce = tx_obj.get("nonce")
 
                 if not sender_address:
                     # TODO: Should this use a default?
@@ -53,36 +53,36 @@ class LedgerSignerMiddleware:
                 sender_account = find_account(sender_address)
 
                 if not sender_account:
-                    raise Exception('Account {} not found'.format(sender_address))
+                    raise Exception(f"Account {sender_address} not found")
 
                 if nonce is None:
                     nonce = self.w3.eth.getTransactionCount(sender_address)
 
                 raw_tx = create_transaction(
-                    to=tx_obj.get('to'),
-                    value=tx_obj.get('value'),
-                    gas=tx_obj.get('gas'),
-                    gas_price=tx_obj.get('gasPrice'),
+                    to=tx_obj.get("to"),
+                    value=tx_obj.get("value"),
+                    gas=tx_obj.get("gas"),
+                    gas_price=tx_obj.get("gasPrice"),
                     nonce=nonce,
-                    data=tx_obj.get('data', ''),
+                    data=tx_obj.get("data", ""),
                     sender_path=sender_account.path,
                 )
 
                 new_params.append(encode_hex(encode(raw_tx, SignedTransaction)))
 
             # Change to raw tx call
-            method = 'eth_sendRawTransaction'
+            method = "eth_sendRawTransaction"
             params = new_params
 
-        elif method == 'eth_accounts':
+        elif method == "eth_accounts":
             return {
-              "id": 1,
-              "jsonrpc": "2.0",
-              "result": list(map(lambda a: a.address, get_accounts()))
+                "id": 1,
+                "jsonrpc": "2.0",
+                "result": list(map(lambda a: a.address, get_accounts())),
             }
 
-        elif method == 'eth_sign':
-            raise NotImplementedError('Not yet implemented by LedgerSignerMiddleware')
+        elif method == "eth_sign":
+            raise NotImplementedError("Not yet implemented by LedgerSignerMiddleware")
 
         response = self.make_request(method, params)
         return response
