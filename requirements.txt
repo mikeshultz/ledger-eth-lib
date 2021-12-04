@@ -1,3 +1,3 @@
 eth-utils>=1.8.1, <2
-ledgerblue==0.1.31
-rlp>=1.2.0
+ledgerblue==0.1.41
+rlp>=2.0.1
