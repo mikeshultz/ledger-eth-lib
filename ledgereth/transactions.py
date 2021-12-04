@@ -36,7 +36,10 @@ def sign_transaction(
         chunk_size = len(chunk)
         if chunk_count == 0:
             retval = dongle_send_data(
-                dongle, "SIGN_TX_FIRST_DATA", chunk, Lc=chunk_size.to_bytes(1, "big")
+                dongle,
+                "SIGN_TX_FIRST_DATA",
+                chunk,
+                Lc=chunk_size.to_bytes(1, "big"),
             )
         else:
             retval = dongle_send_data(
