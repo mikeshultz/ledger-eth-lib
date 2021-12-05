@@ -5,7 +5,7 @@ from eth_utils import decode_hex
 from rlp import Serializable, encode
 
 from ledgereth.comms import chunks, dongle_send_data, init_dongle
-from ledgereth.constants import CHAIN_ID, DEFAULT_PATH_STRING
+from ledgereth.constants import DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
 from ledgereth.objects import SignedTransaction, Transaction
 from ledgereth.utils import is_bip32_path, is_hex_string, parse_bip32_path
 
@@ -16,6 +16,7 @@ def sign_transaction(
     tx: Serializable, sender_path: str = DEFAULT_PATH_STRING, dongle: Any = None
 ) -> SignedTransaction:
     """Sign a transaction object (rlp.Serializable)"""
+    given_dongle = dongle is not None
     dongle = init_dongle(dongle)
     retval = None
 
@@ -36,7 +37,10 @@ def sign_transaction(
         chunk_size = len(chunk)
         if chunk_count == 0:
             retval = dongle_send_data(
-                dongle, "SIGN_TX_FIRST_DATA", chunk, Lc=chunk_size.to_bytes(1, "big")
+                dongle,
+                "SIGN_TX_FIRST_DATA",
+                chunk,
+                Lc=chunk_size.to_bytes(1, "big"),
             )
         else:
             retval = dongle_send_data(
@@ -50,16 +54,17 @@ def sign_transaction(
     if retval is None or len(retval) < 64:
         raise Exception("Invalid response from Ledger")
 
-    if (CHAIN_ID * 2 + 35) + 1 > 255:
-        ecc_parity = retval[0] - ((CHAIN_ID * 2 + 35) % 256)
-        v = (CHAIN_ID * 2 + 35) + ecc_parity
+    chain_id = tx["chainid"] or DEFAULT_CHAIN_ID
+    if (chain_id * 2 + 35) + 1 > 255:
+        ecc_parity = retval[0] - ((chain_id * 2 + 35) % 256)
+        v = (chain_id * 2 + 35) + ecc_parity
     else:
         v = retval[0]
 
     r = int(binascii.hexlify(retval[1:33]), 16)
     s = int(binascii.hexlify(retval[33:65]), 16)
 
-    return SignedTransaction(
+    signed = SignedTransaction(
         nonce=tx.nonce,
         gasprice=tx.gasprice,
         startgas=tx.startgas,
@@ -71,6 +76,12 @@ def sign_transaction(
         s=s,
     )
 
+    # If this func inited the dongle, it close it, otherwise core dump
+    if not given_dongle:
+        dongle.close()
+
+    return signed
+
 
 def create_transaction(
     to: bytes,
@@ -79,10 +90,12 @@ def create_transaction(
     gas_price: int,
     nonce: int,
     data: Text,
+    chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
     dongle: Any = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from indiv args"""
+    given_dongle = dongle is not None
     dongle = init_dongle(dongle)
 
     if not is_hex_string(data):
@@ -96,6 +109,13 @@ def create_transaction(
         gasprice=gas_price,
         data=data,
         nonce=nonce,
+        chainid=chain_id,
     )
 
-    return sign_transaction(tx, sender_path, dongle=dongle)
+    signed = sign_transaction(tx, sender_path, dongle=dongle)
+
+    # If this func inited the dongle, it close it, otherwise core dump
+    if not given_dongle:
+        dongle.close()
+
+    return signed

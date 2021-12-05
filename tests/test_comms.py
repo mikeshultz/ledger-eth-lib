@@ -1,3 +1,12 @@
+"""
+Test low level communications functionality.
+
+TODO
+----
+ - Parameterize chain_id and test more of them? Though it's a PITA to have to
+    approve all the transactions when testing..  Might work with mock dongle if
+    that ever gets done.
+"""
 import binascii
 import re
 
@@ -68,7 +77,7 @@ def test_comms_multiple_accounts(yield_dongle):
 
 
 def test_comms_sign_small_tx(yield_dongle):
-    CHAIN_ID = 0  # eh?
+    CHAIN_ID = 1
 
     with yield_dongle() as dongle:
         tx = Transaction(
@@ -78,6 +87,7 @@ def test_comms_sign_small_tx(yield_dongle):
             gasprice=int(1e9),
             data=b"",
             nonce=0,
+            chainid=CHAIN_ID,
         )
         encoded_tx = rlp.encode(tx, Transaction)
         # TODO: Never did figure out what the path count prefix was about
@@ -87,7 +97,10 @@ def test_comms_sign_small_tx(yield_dongle):
             + encoded_tx
         )
         vrsbytes = dongle_send_data(
-            dongle, SIGN_TX_FIRST_DATA, payload, Lc=int(len(payload)).to_bytes(1, "big")
+            dongle,
+            SIGN_TX_FIRST_DATA,
+            payload,
+            Lc=int(len(payload)).to_bytes(1, "big"),
         )
 
         assert type(vrsbytes) == bytearray
@@ -101,13 +114,13 @@ def test_comms_sign_small_tx(yield_dongle):
         r = binascii.hexlify(vrsbytes[1:33])
         s = binascii.hexlify(vrsbytes[33:65])
 
-        assert v in (27, 28)  # 0, 1 okay?
+        assert v in [(CHAIN_ID * 2 + 35) + x for x in (0, 1)]
         assert r  # TODO: What's an invalid value here?
         assert s  # TODO: What's an invalid value here?
 
 
 def test_comms_sign_large_tx(yield_dongle):
-    CHAIN_ID = 0  # eh?
+    CHAIN_ID = 1  # eh?
     chunk_count = 0
     retval = None
     txdata = "0x29589f61000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000001628c8b11e853c40000000000000000000000000f5d2fb29fb7d3cfee444a200298f468908cc9420000000000000000000000009283099a29556fcf8fff5b2cea2d4f67cb7a7a8b8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000107345af81329fe1a05000000000000000000000000440bbd6a888a36de6e2f6a25f65bc4e16874faa9000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000045045524d00000000000000000000000000000000000000000000000000000000"
@@ -119,7 +132,7 @@ def test_comms_sign_large_tx(yield_dongle):
             startgas=int(1e6),
             gasprice=int(1e9),
             data=decode_hex(txdata),
-            nonce=1,
+            nonce=1234,
         )
         encoded_tx = rlp.encode(tx, Transaction)
         payload = (
@@ -155,7 +168,7 @@ def test_comms_sign_large_tx(yield_dongle):
         r = binascii.hexlify(retval[1:33])
         s = binascii.hexlify(retval[33:65])
 
-        assert v in (27, 28)  # 0, 1 okay?
+        assert v in [(CHAIN_ID * 2 + 35) + x for x in (0, 1)]
         assert r  # TODO: What's an invalid value here?
         assert s  # TODO: What's an invalid value here?
 

@@ -34,6 +34,12 @@ To get the available accounts from your Ledger:
 
     python -m ledgereth accounts
 
+### Create and Sign Transaction
+
+You can use the CLI util to create and sign a transaction as well.
+
+    python -m ledgereth send FROM_ADDRESS TO_ADDRESS VALUE_WEI -n NONCE -p GAS_PRICE_WEI -c CHAIN_ID
+
 ## Web3.py Integration
 
 ledger-eth-lib provides a Web3.py middleware.  It will automatically intercept the relevant JSON-RPC
@@ -94,3 +100,5 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
 - Add fake dongle support to pytest suite so tests can be run without a real Ledger and human interaction
 - Fill out tests
 - Add messaging signing support
+- Add type 1 transactions (access list)
+- Add EIP-1559 support

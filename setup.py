@@ -1,33 +1,43 @@
-from os import path
+import ledgereth
+from pathlib import Path
 
 from setuptools import find_packages, setup
+from importlib.machinery import SourceFileLoader
 
 import ledgereth
 
-pwd = path.abspath(path.dirname(__file__))
+pwd = Path(__file__).parent
 
 # Get the long description from the README file
-with open(path.join(pwd, "README.md"), encoding="utf-8") as f:
+with pwd.joinpath("README.md").open(encoding="utf-8") as f:
     long_description = f.read()
 
 
 def requirements_to_list(filename):
     return [
         dep
-        for dep in open(path.join(pwd, filename)).read().split("\n")
+        for dep in pwd.joinpath(filename)
+        .open(encoding="utf-8")
+        .read()
+        .split("\n")
         if (dep and not dep.startswith("#"))
     ]
 
 
+# Allows us to import the file without executing imports in module __init__
+meta = SourceFileLoader(
+    "meta", str(pwd.joinpath("ledgereth/_meta.py"))
+).load_module()
+
 setup(
     name="ledgereth",
-    version=ledgereth.__version__,
+    version=meta.version,
     description="Library to interface with ledger-app-eth on Ledger hardware wallets",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mikeshultz/ledger-eth-lib",
-    author=ledgereth.__author__,
-    author_email=ledgereth.__email__,
+    author=meta.author,
+    author_email=meta.email,
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
