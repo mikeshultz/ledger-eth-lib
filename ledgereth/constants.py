@@ -4,9 +4,8 @@ from eth_utils import remove_0x_prefix
 
 from ledgereth.utils import get_int_from_dict, parse_bip32_path
 
-# CHAIN_ID to use
-# TODO: This might should be configurable
-CHAIN_ID = 0
+# Chain ID to use if not given by user
+DEFAULT_CHAIN_ID = 1
 
 # Default accounts to fetch with get_accounts
 DEFAULT_ACCOUNTS_FETCH = 1

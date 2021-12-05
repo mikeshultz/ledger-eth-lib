@@ -2,6 +2,7 @@ import rlp
 from eth_utils import encode_hex, to_checksum_address
 from rlp.sedes import Binary, big_endian_int, binary
 
+from ledgereth.constants import DEFAULT_CHAIN_ID
 from ledgereth.utils import is_bip32_path, is_bytes, parse_bip32_path
 
 
@@ -80,12 +81,27 @@ class Transaction(rlp.Serializable):
         ("to", Binary.fixed_length(20, allow_empty=True)),
         ("value", big_endian_int),
         ("data", binary),
+        ("chainid", big_endian_int),
+        # Expected nine elements as part of EIP-155 transactions
+        ("dummy1", big_endian_int),
+        ("dummy2", big_endian_int),
     ]
 
     def __init__(
-        self, nonce: int, gasprice: int, startgas: int, to: bytes, value: int, data: str
+        self,
+        nonce: int,
+        gasprice: int,
+        startgas: int,
+        to: bytes,
+        value: int,
+        data: str,
+        chainid: int = DEFAULT_CHAIN_ID,
+        dummy1: int = 0,
+        dummy2: int = 0,
     ):
-        super(RLPTx, self).__init__(nonce, gasprice, startgas, to, value, data)
+        super(RLPTx, self).__init__(
+            nonce, gasprice, startgas, to, value, data, chainid, dummy1, dummy2
+        )
 
     def sender(self, value: str) -> None:
         self._sender = value
