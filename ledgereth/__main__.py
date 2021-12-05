@@ -8,7 +8,10 @@ from ledgereth.comms import init_dongle
 def get_args(argv):
     parser = argparse.ArgumentParser(description="Do some ledger ops")
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Print extra debugging information"
+        "-d",
+        "--debug",
+        action="store_true",
+        help="Print extra debugging information",
     )
 
     subparsers = parser.add_subparsers(
@@ -19,7 +22,10 @@ def get_args(argv):
         "accounts", help="Print accounts from the Ledger"
     )
     accounts_parser.add_argument(
-        "path", metavar="PATH", nargs="?", help="Get the account for a specific path"
+        "path",
+        metavar="PATH",
+        nargs="?",
+        help="Get the account for a specific path",
     )
     accounts_parser.add_argument(
         "-c",
@@ -50,13 +56,13 @@ def main(argv=sys.argv[1:]):
     args = get_args(argv)
     command = args.command
 
-    dongle = init_dongle(debug=args.debug)
-
-    if command in COMMANDS:
-        COMMANDS[command](dongle, args)
-    else:
+    if command not in COMMANDS:
         print(f"Invalid command: {command}", file=sys.stderr)
         sys.exit(1)
+
+    dongle = init_dongle(debug=args.debug)
+    COMMANDS[command](dongle, args)
+    dongle.close()
 
 
 if __name__ == "__main__":
