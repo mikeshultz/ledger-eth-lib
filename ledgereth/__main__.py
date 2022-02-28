@@ -86,8 +86,23 @@ def get_args(argv):
         "-p",
         "--gasprice",
         type=int,
-        required=True,
+        required=False,
         help="The gas price to use for the tx",
+    )
+    send_parser.add_argument(
+        "-f",
+        "--max-fee",
+        type=int,
+        required=False,
+        help="The max fee per gas to use for the tx",
+    )
+    send_parser.add_argument(
+        "-b",
+        "--bribe",
+        type=int,
+        required=False,
+        default=0,
+        help="The priority fee per gas to use for the tx (default: 0)",
     )
     send_parser.add_argument(
         "-d",
@@ -121,6 +136,13 @@ def send_value(dongle, args):
         dongle.close()
         sys.exit(1)
 
+    if not args.gasprice and not args.max_fee:
+        print(
+            "Either --gasprice or --max-fee must be provided", file=sys.stderr
+        )
+        dongle.close()
+        sys.exit(1)
+
     to_address = args.to_address
 
     signed = create_transaction(
@@ -128,6 +150,8 @@ def send_value(dongle, args):
         value=args.wei,
         gas=args.gas,
         gas_price=args.gasprice,
+        max_fee_per_gas=args.max_fee,
+        bribe_per_gas=args.bribe,
         data=args.data or "",
         nonce=args.nonce,
         chain_id=args.chainid,

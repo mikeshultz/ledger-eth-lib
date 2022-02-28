@@ -61,3 +61,29 @@ def test_rinkeby_send(yield_dongle):
     assert signed.v in [(CHAIN_ID * 2 + 35) + x for x in (0, 1)]
     assert signed.r
     assert signed.s
+
+
+def test_eip1559_send(yield_dongle):
+    """Test a type 2 (EIP-1559) transaction"""
+    CHAIN_ID = 3
+    bribe_per_gas = int(1e9)
+    max_fee_per_gas = int(20e9)
+
+    # Matches tx from app-ethereum tests
+    signed = create_transaction(
+        to="0xb2bb2b958afa2e96dab3f3ce7162b87daea39017",
+        value=int(1e16),  # 0.01 ETH
+        gas=21000,
+        bribe_per_gas=bribe_per_gas,
+        max_fee_per_gas=max_fee_per_gas,
+        data="",
+        nonce=6,
+        chain_id=CHAIN_ID,
+    )
+
+    assert signed.max_priority_fee_per_gas == bribe_per_gas
+    assert signed.max_fee_per_gas == max_fee_per_gas
+    # Transaactions after EIP-2930 use a parity byte instead of "v"
+    assert signed.y_parity in (1, 2)
+    assert signed.sender_r
+    assert signed.sender_s

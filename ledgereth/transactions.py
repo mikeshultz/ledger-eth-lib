@@ -6,10 +6,24 @@ from rlp import Serializable, encode
 
 from ledgereth.comms import chunks, dongle_send_data, init_dongle
 from ledgereth.constants import DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
-from ledgereth.objects import SignedTransaction, Transaction
+from ledgereth.objects import (
+    SignedTransaction,
+    SignedType2Transaction,
+    Transaction,
+    TransactionType,
+    Type2Transaction,
+)
 from ledgereth.utils import is_bip32_path, is_hex_string, parse_bip32_path
 
 Text = Union[str, bytes]
+
+
+def tx_chain_id(tx):
+    if hasattr(tx, "chainid"):
+        return tx.chainid
+    elif hasattr(tx, "chain_id"):
+        return tx.chain_id
+    return DEFAULT_CHAIN_ID
 
 
 def sign_transaction(
@@ -20,11 +34,16 @@ def sign_transaction(
     dongle = init_dongle(dongle)
     retval = None
 
-    assert isinstance(
-        tx, Transaction
-    ), "Only Transaction objects are currently supported"
-    print("tx: ", tx)
-    encoded_tx = encode(tx, Transaction)
+    if isinstance(tx, Transaction):
+        encoded_tx = encode(tx, Transaction)
+    elif isinstance(tx, Type2Transaction):
+        encoded_tx = tx.transaction_type.to_byte() + encode(
+            tx, Type2Transaction
+        )
+    else:
+        raise ValueError(
+            "Only Transaction and Type2Transaction objects are currently supported"
+        )
 
     if not is_bip32_path(sender_path):
         raise ValueError("Invalid sender BIP32 path given to sign_transaction")
@@ -54,27 +73,45 @@ def sign_transaction(
     if retval is None or len(retval) < 64:
         raise Exception("Invalid response from Ledger")
 
-    chain_id = tx["chainid"] or DEFAULT_CHAIN_ID
-    if (chain_id * 2 + 35) + 1 > 255:
-        ecc_parity = retval[0] - ((chain_id * 2 + 35) % 256)
-        v = (chain_id * 2 + 35) + ecc_parity
-    else:
-        v = retval[0]
-
+    chain_id = tx_chain_id(tx)
     r = int(binascii.hexlify(retval[1:33]), 16)
     s = int(binascii.hexlify(retval[33:65]), 16)
 
-    signed = SignedTransaction(
-        nonce=tx.nonce,
-        gasprice=tx.gasprice,
-        startgas=tx.startgas,
-        to=tx.to,
-        value=tx.value,
-        data=tx.data,
-        v=v,
-        r=r,
-        s=s,
-    )
+    if tx.transaction_type < TransactionType.EIP_2930:
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = retval[0] - ((chain_id * 2 + 35) % 256)
+            v = (chain_id * 2 + 35) + ecc_parity
+        else:
+            v = retval[0]
+
+        signed = SignedTransaction(
+            nonce=tx.nonce,
+            gasprice=tx.gasprice,
+            startgas=tx.startgas,
+            to=tx.to,
+            value=tx.value,
+            data=tx.data,
+            v=v,
+            r=r,
+            s=s,
+        )
+    else:
+        y_parity = retval[0]
+
+        signed = SignedType2Transaction(
+            chain_id=tx.chain_id,
+            nonce=tx.nonce,
+            gas_limit=tx.gas_limit,
+            destination=tx.destination,
+            amount=tx.amount,
+            data=tx.data,
+            max_priority_fee_per_gas=tx.max_priority_fee_per_gas,
+            max_fee_per_gas=tx.max_fee_per_gas,
+            access_list=tx.access_list,
+            y_parity=y_parity,
+            sender_r=r,
+            sender_s=s,
+        )
 
     # If this func inited the dongle, it close it, otherwise core dump
     if not given_dongle:
@@ -87,9 +124,11 @@ def create_transaction(
     to: bytes,
     value: int,
     gas: int,
-    gas_price: int,
     nonce: int,
     data: Text,
+    gas_price: int = None,
+    bribe_per_gas: int = 0,
+    max_fee_per_gas: int = 0,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
     dongle: Any = None,
@@ -101,16 +140,38 @@ def create_transaction(
     if not is_hex_string(data):
         data = decode_hex(data) or b""
 
+    # EIP-1559 transactions should never have gas_price
+    if gas_price and (bribe_per_gas or max_fee_per_gas):
+        raise ValueError(
+            "gas_price is incompatible with bribe_per_gas and max_fee_per_gas"
+        )
+
+    # we need a gas price for a valid transaction
+    if not gas_price and not max_fee_per_gas:
+        raise ValueError("gas_price or max_fee_per_gas must be provided")
+
     # Create a serializable tx object
-    tx = Transaction(
-        to=decode_hex(to),
-        value=value,
-        startgas=gas,
-        gasprice=gas_price,
-        data=data,
-        nonce=nonce,
-        chainid=chain_id,
-    )
+    if max_fee_per_gas:
+        tx = Type2Transaction(
+            destination=decode_hex(to),
+            amount=value,
+            gas_limit=gas,
+            data=data,
+            nonce=nonce,
+            chain_id=chain_id,
+            max_priority_fee_per_gas=bribe_per_gas,
+            max_fee_per_gas=max_fee_per_gas,
+        )
+    else:
+        tx = Transaction(
+            to=decode_hex(to),
+            value=value,
+            startgas=gas,
+            gasprice=gas_price,
+            data=data,
+            nonce=nonce,
+            chainid=chain_id,
+        )
 
     signed = sign_transaction(tx, sender_path, dongle=dongle)
 
