@@ -164,8 +164,9 @@ class Type2Transaction(rlp.Serializable):
         amount: int,
         data: bytes,
         # TODO: Access lists, type 1 transactions
-        access_list: List[bytes] = list(),
+        access_list: List[bytes] = None,
     ):
+        access_list = access_list or []
         super().__init__(
             chain_id,
             nonce,
