@@ -27,7 +27,9 @@ def tx_chain_id(tx):
 
 
 def sign_transaction(
-    tx: Serializable, sender_path: str = DEFAULT_PATH_STRING, dongle: Any = None
+    tx: Serializable,
+    sender_path: str = DEFAULT_PATH_STRING,
+    dongle: Any = None,
 ) -> SignedTransaction:
     """Sign a transaction object (rlp.Serializable)"""
     given_dongle = dongle is not None
@@ -121,13 +123,13 @@ def sign_transaction(
 
 
 def create_transaction(
-    to: bytes,
+    to: Text,
     value: int,
     gas: int,
     nonce: int,
-    data: Text,
-    gas_price: int = None,
-    bribe_per_gas: int = 0,
+    data: Text = b"",
+    gas_price: int = 0,
+    priority_fee_per_gas: int = 0,
     max_fee_per_gas: int = 0,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
@@ -137,13 +139,16 @@ def create_transaction(
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
 
-    if not is_hex_string(data):
-        data = decode_hex(data) or b""
+    if is_hex_string(to):
+        to = decode_hex(to)
+
+    if not data or is_hex_string(data):
+        data = decode_hex(data)
 
     # EIP-1559 transactions should never have gas_price
-    if gas_price and (bribe_per_gas or max_fee_per_gas):
+    if gas_price and (priority_fee_per_gas or max_fee_per_gas):
         raise ValueError(
-            "gas_price is incompatible with bribe_per_gas and max_fee_per_gas"
+            "gas_price is incompatible with priority_fee_per_gas and max_fee_per_gas"
         )
 
     # we need a gas price for a valid transaction
@@ -153,18 +158,18 @@ def create_transaction(
     # Create a serializable tx object
     if max_fee_per_gas:
         tx = Type2Transaction(
-            destination=decode_hex(to),
+            destination=to,
             amount=value,
             gas_limit=gas,
             data=data,
             nonce=nonce,
             chain_id=chain_id,
-            max_priority_fee_per_gas=bribe_per_gas,
+            max_priority_fee_per_gas=priority_fee_per_gas,
             max_fee_per_gas=max_fee_per_gas,
         )
     else:
         tx = Transaction(
-            to=decode_hex(to),
+            to=to,
             value=value,
             startgas=gas,
             gasprice=gas_price,

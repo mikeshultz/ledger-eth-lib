@@ -1,5 +1,6 @@
 import argparse
 import sys
+from enum import IntEnum
 
 from ledgereth import (
     create_transaction,
@@ -8,6 +9,12 @@ from ledgereth import (
     get_accounts,
 )
 from ledgereth.comms import init_dongle
+
+
+class ExitCodes(IntEnum):
+    SUCCESS = 0
+    GENERAL_ERROR = 1
+    INVALID_ARGUMENT = 2
 
 
 def get_args(argv):
@@ -86,21 +93,18 @@ def get_args(argv):
         "-p",
         "--gasprice",
         type=int,
-        required=False,
         help="The gas price to use for the tx",
     )
     send_parser.add_argument(
         "-f",
         "--max-fee",
         type=int,
-        required=False,
         help="The max fee per gas to use for the tx",
     )
     send_parser.add_argument(
         "-b",
-        "--bribe",
+        "--priority-fee",
         type=int,
-        required=False,
         default=0,
         help="The priority fee per gas to use for the tx (default: 0)",
     )
@@ -134,14 +138,14 @@ def send_value(dongle, args):
     if not account:
         print("Account not found on device", file=sys.stderr)
         dongle.close()
-        sys.exit(1)
+        sys.exit(ExitCodes.INVALID_ARGUMENT)
 
     if not args.gasprice and not args.max_fee:
         print(
             "Either --gasprice or --max-fee must be provided", file=sys.stderr
         )
         dongle.close()
-        sys.exit(1)
+        sys.exit(ExitCodes.INVALID_ARGUMENT)
 
     to_address = args.to_address
 
@@ -151,7 +155,7 @@ def send_value(dongle, args):
         gas=args.gas,
         gas_price=args.gasprice,
         max_fee_per_gas=args.max_fee,
-        bribe_per_gas=args.bribe,
+        priority_fee_per_gas=args.priority_fee,
         data=args.data or "",
         nonce=args.nonce,
         chain_id=args.chainid,
@@ -172,7 +176,7 @@ def main(argv=sys.argv[1:]):
 
     if command not in COMMANDS:
         print(f"Invalid command: {command}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(ExitCodes.INVALID_ARGUMENT)
 
     dongle = init_dongle(debug=args.debug)
     COMMANDS[command](dongle, args)

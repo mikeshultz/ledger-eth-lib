@@ -121,9 +121,6 @@ class Transaction(rlp.Serializable):
             nonce, gasprice, startgas, to, value, data, chainid, dummy1, dummy2
         )
 
-    def sender(self, value: str) -> None:
-        self._sender = value
-
     def to_dict(self) -> dict:
         d = {}
         for name, _ in self.__class__._meta.fields:
@@ -181,9 +178,6 @@ class Type2Transaction(rlp.Serializable):
             access_list,
         )
 
-    def sender(self, value: str) -> None:
-        self._sender = value
-
     def to_dict(self) -> dict:
         d = {}
         for name, _ in self.__class__._meta.fields:
@@ -220,9 +214,6 @@ class SignedTransaction(rlp.Serializable):
         s: int,
     ):
         super().__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
-
-    def sender(self, value: str) -> None:
-        self._sender = value
 
     def to_dict(self) -> dict:
         d = {}
@@ -293,9 +284,6 @@ class SignedType2Transaction(rlp.Serializable):
             sender_r,
             sender_s,
         )
-
-    def sender(self, value: str) -> None:
-        self._sender = value
 
     def to_dict(self) -> dict:
         d = {}
