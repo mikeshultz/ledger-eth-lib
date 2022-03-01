@@ -83,7 +83,7 @@ def test_eip1559_send(yield_dongle):
 
     assert signed.max_priority_fee_per_gas == bribe_per_gas
     assert signed.max_fee_per_gas == max_fee_per_gas
-    # Transaactions after EIP-2930 use a parity byte instead of "v"
+    # Transactions after EIP-2930 use a parity byte instead of "v"
     assert signed.y_parity in (1, 2)
     assert signed.sender_r
     assert signed.sender_s
