@@ -1,10 +1,7 @@
-import ledgereth
 from pathlib import Path
 
 from setuptools import find_packages, setup
 from importlib.machinery import SourceFileLoader
-
-import ledgereth
 
 pwd = Path(__file__).parent
 
