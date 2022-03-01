@@ -71,11 +71,10 @@ Create a transaction object and sign it with the default account.
     from ledgereth import create_transaction
     tx = create_transaction(
         '0xb78f53524ae9d465279e7c3495f71d5db2419e13',  # to
-        '0x4dae53ee778a324bd317bd270d6227406b6bd4ec',  # from
         int(1e18),  # value
-        int(1e5),  # gas limit
-        int(1e9),  # gas price
-        1,  # nonce
+        int(1e5),   # gas limit
+        1,          # nonce
+        int(1e9),   # gas price
     )
     signature = '0x{}{}{}'.format(
         hex(tx.v)[2:],
