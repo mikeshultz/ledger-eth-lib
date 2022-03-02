@@ -169,8 +169,8 @@ class Type2Transaction(rlp.Serializable):
         super().__init__(
             chain_id,
             nonce,
-            max_fee_per_gas,
             max_priority_fee_per_gas,
+            max_fee_per_gas,
             gas_limit,
             destination,
             amount,
@@ -273,8 +273,8 @@ class SignedType2Transaction(rlp.Serializable):
         super().__init__(
             chain_id,
             nonce,
-            max_fee_per_gas,
             max_priority_fee_per_gas,
+            max_fee_per_gas,
             gas_limit,
             destination,
             amount,
