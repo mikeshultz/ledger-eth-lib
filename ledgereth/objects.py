@@ -1,12 +1,30 @@
 import rlp
 from enum import IntEnum
-from typing import List
+from typing import List, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
-from rlp.sedes import Binary, big_endian_int, binary, List as ListSedes
+from rlp.sedes import (
+    BigEndianInt,
+    Binary,
+    CountableList,
+    List as ListSedes,
+    big_endian_int,
+    binary,
+)
 
 from ledgereth.constants import DEFAULT_CHAIN_ID
 from ledgereth.utils import is_bip32_path, is_bytes, parse_bip32_path
+
+
+address = Binary.fixed_length(20, allow_empty=False)
+access_list_sede_type = CountableList(
+    ListSedes(
+        [
+            address,
+            CountableList(BigEndianInt(32)),
+        ]
+    ),
+)
 
 
 class TransactionType(IntEnum):
@@ -93,12 +111,12 @@ class Transaction(rlp.Serializable):
 
     fields = [
         ("nonce", big_endian_int),
-        ("gasprice", big_endian_int),
-        ("startgas", big_endian_int),
-        ("to", Binary.fixed_length(20, allow_empty=True)),
-        ("value", big_endian_int),
+        ("gas_price", big_endian_int),
+        ("gas_limit", big_endian_int),
+        ("destination", address),
+        ("amount", big_endian_int),
         ("data", binary),
-        ("chainid", big_endian_int),
+        ("chain_id", big_endian_int),
         # Expected nine elements as part of EIP-155 transactions
         ("dummy1", big_endian_int),
         ("dummy2", big_endian_int),
@@ -108,17 +126,74 @@ class Transaction(rlp.Serializable):
     def __init__(
         self,
         nonce: int,
-        gasprice: int,
-        startgas: int,
-        to: bytes,
-        value: int,
+        gas_price: int,
+        gas_limit: int,
+        destination: bytes,
+        amount: int,
         data: bytes,
-        chainid: int = DEFAULT_CHAIN_ID,
+        chain_id: int = DEFAULT_CHAIN_ID,
         dummy1: int = 0,
         dummy2: int = 0,
     ):
         super().__init__(
-            nonce, gasprice, startgas, to, value, data, chainid, dummy1, dummy2
+            nonce,
+            gas_price,
+            gas_limit,
+            destination,
+            amount,
+            data,
+            chain_id,
+            dummy1,
+            dummy2,
+        )
+
+    def to_dict(self) -> dict:
+        d = {}
+        for name, _ in self.__class__._meta.fields:
+            d[name] = getattr(self, name)
+        return d
+
+
+class Type1Transaction(rlp.Serializable):
+    """An unsigned Type 1 transaction.
+
+    Format spec:
+
+    0x01 || rlp([chainId, nonce, gasPrice, gasLimit, destination, amount, data, accessList])
+    """
+
+    fields = [
+        ("chain_id", big_endian_int),
+        ("nonce", big_endian_int),
+        ("gas_price", big_endian_int),
+        ("gas_limit", big_endian_int),
+        ("destination", address),
+        ("amount", big_endian_int),
+        ("data", binary),
+        ("access_list", access_list_sede_type),
+    ]
+    transaction_type = TransactionType.EIP_2930
+
+    def __init__(
+        self,
+        chain_id: int,
+        nonce: int,
+        gas_price: int,
+        gas_limit: int,
+        destination: bytes,
+        amount: int,
+        data: bytes,
+        access_list: List[Tuple[bytes, List[bytes]]] = list(),
+    ):
+        super().__init__(
+            chain_id,
+            nonce,
+            gas_price,
+            gas_limit,
+            destination,
+            amount,
+            data,
+            access_list,
         )
 
     def to_dict(self) -> dict:
@@ -134,8 +209,6 @@ class Type2Transaction(rlp.Serializable):
     Format spec:
 
     0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list])
-
-    Note: access_list is not actually implemented yet.
     """
 
     fields = [
@@ -144,12 +217,10 @@ class Type2Transaction(rlp.Serializable):
         ("max_priority_fee_per_gas", big_endian_int),
         ("max_fee_per_gas", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", Binary.fixed_length(20, allow_empty=True)),
+        ("destination", address),
         ("amount", big_endian_int),
         ("data", binary),
-        # TODO: This only supports empty lists and needs to be fixed for
-        # EIP-2930 support
-        ("access_list", ListSedes()),
+        ("access_list", access_list_sede_type),
     ]
     transaction_type = TransactionType.EIP_1559
 
@@ -163,8 +234,7 @@ class Type2Transaction(rlp.Serializable):
         destination: bytes,
         amount: int,
         data: bytes,
-        # TODO: Access lists, type 1 transactions
-        access_list: List[bytes] = list(),
+        access_list: List[Tuple[bytes, List[bytes]]] = list(),
     ):
         super().__init__(
             chain_id,
@@ -190,10 +260,10 @@ class SignedTransaction(rlp.Serializable):
 
     fields = [
         ("nonce", big_endian_int),
-        ("gasprice", big_endian_int),
-        ("startgas", big_endian_int),
-        ("to", Binary.fixed_length(20, allow_empty=True)),
-        ("value", big_endian_int),
+        ("gas_price", big_endian_int),
+        ("gas_limit", big_endian_int),
+        ("destination", address),
+        ("amount", big_endian_int),
         ("data", binary),
         ("v", big_endian_int),
         ("r", big_endian_int),
@@ -204,16 +274,18 @@ class SignedTransaction(rlp.Serializable):
     def __init__(
         self,
         nonce: int,
-        gasprice: int,
-        startgas: int,
-        to: bytes,
-        value: int,
+        gas_price: int,
+        gas_limit: int,
+        destination: bytes,
+        amount: int,
         data: bytes,
         v: int,
         r: int,
         s: int,
     ):
-        super().__init__(nonce, gasprice, startgas, to, value, data, v, r, s)
+        super().__init__(
+            nonce, gas_price, gas_limit, destination, amount, data, v, r, s
+        )
 
     def to_dict(self) -> dict:
         d = {}
@@ -223,6 +295,70 @@ class SignedTransaction(rlp.Serializable):
 
     def raw_transaction(self):
         return encode_hex(rlp.encode(self, SignedTransaction))
+
+    # Match the API of the web3.py Transaction object
+    rawTransaction = property(raw_transaction)
+
+
+class SignedType1Transaction(rlp.Serializable):
+    """A signed Type 1 transaction.
+
+    Format spec:
+
+    0x01 || rlp([chainId, nonce, gasPrice, gasLimit, destination, amount, data, accessList, signatureYParity, signatureR, signatureS])
+    """
+
+    fields = [
+        ("chain_id", big_endian_int),
+        ("nonce", big_endian_int),
+        ("gas_price", big_endian_int),
+        ("gas_limit", big_endian_int),
+        ("destination", address),
+        ("amount", big_endian_int),
+        ("data", binary),
+        ("access_list", access_list_sede_type),
+        ("y_parity", big_endian_int),
+        ("sender_r", big_endian_int),
+        ("sender_s", big_endian_int),
+    ]
+    transaction_type = TransactionType.EIP_2930
+
+    def __init__(
+        self,
+        chain_id: int,
+        nonce: int,
+        gas_price: int,
+        gas_limit: int,
+        destination: bytes,
+        amount: int,
+        data: bytes,
+        access_list: List[bytes],
+        y_parity: int,
+        sender_r: int,
+        sender_s: int,
+    ):
+        super().__init__(
+            chain_id,
+            nonce,
+            gas_price,
+            gas_limit,
+            destination,
+            amount,
+            data,
+            access_list,
+            y_parity,
+            sender_r,
+            sender_s,
+        )
+
+    def to_dict(self) -> dict:
+        d = {}
+        for name, _ in self.__class__._meta.fields:
+            d[name] = getattr(self, name)
+        return d
+
+    def raw_transaction(self):
+        return encode_hex(b"\x02" + rlp.encode(self, SignedType2Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
@@ -242,12 +378,10 @@ class SignedType2Transaction(rlp.Serializable):
         ("max_priority_fee_per_gas", big_endian_int),
         ("max_fee_per_gas", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", Binary.fixed_length(20, allow_empty=True)),
+        ("destination", address),
         ("amount", big_endian_int),
         ("data", binary),
-        # TODO: This only supports empty lists and needs to be fixed for
-        # EIP-2930 support
-        ("access_list", ListSedes()),
+        ("access_list", access_list_sede_type),
         ("y_parity", big_endian_int),
         ("sender_r", big_endian_int),
         ("sender_s", big_endian_int),
@@ -264,7 +398,6 @@ class SignedType2Transaction(rlp.Serializable):
         destination: bytes,
         amount: int,
         data: bytes,
-        # TODO: Access lists, type 1 transactions
         access_list: List[bytes],
         y_parity: int,
         sender_r: int,
