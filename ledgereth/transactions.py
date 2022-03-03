@@ -181,7 +181,7 @@ def create_transaction(
     max_fee_per_gas: int = 0,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
-    access_list: Optional[List[Tuple[bytes, List[bytes]]]] = None,
+    access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
     dongle: Any = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from indiv args"""

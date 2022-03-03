@@ -183,7 +183,7 @@ class Type1Transaction(rlp.Serializable):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[bytes]]] = list(),
+        access_list: List[Tuple[bytes, List[int]]] = list(),
     ):
         super().__init__(
             chain_id,
@@ -234,7 +234,7 @@ class Type2Transaction(rlp.Serializable):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[bytes]]] = list(),
+        access_list: List[Tuple[bytes, List[int]]] = list(),
     ):
         super().__init__(
             chain_id,
@@ -332,7 +332,7 @@ class SignedType1Transaction(rlp.Serializable):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[bytes],
+        access_list: List[Tuple[bytes, List[int]]],
         y_parity: int,
         sender_r: int,
         sender_s: int,
@@ -398,7 +398,7 @@ class SignedType2Transaction(rlp.Serializable):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[bytes],
+        access_list: List[Tuple[bytes, List[int]]],
         y_parity: int,
         sender_r: int,
         sender_s: int,
