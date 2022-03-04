@@ -150,12 +150,12 @@ def send_value(dongle, args):
     to_address = args.to_address
 
     signed = create_transaction(
-        to=to_address,
-        value=args.wei,
+        destination=to_address,
+        amount=args.wei,
         gas=args.gas,
         gas_price=args.gasprice,
         max_fee_per_gas=args.max_fee,
-        priority_fee_per_gas=args.priority_fee,
+        max_priority_fee_per_gas=args.priority_fee,
         data=args.data or "",
         nonce=args.nonce,
         chain_id=args.chainid,

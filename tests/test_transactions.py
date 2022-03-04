@@ -12,10 +12,12 @@ def test_pre_155_send(yield_dongle):
     with yield_dongle() as dongle:
         # One can also use create_transaction(), this is ust to add some coverage
         tx = Transaction(
-            to=decode_hex("0xf0155486a14539f784739be1c02e93f28eb8e960"),
-            value=int(1e17),
-            startgas=int(1e6),
-            gasprice=int(1e9),
+            destination=decode_hex(
+                "0xf0155486a14539f784739be1c02e93f28eb8e960"
+            ),
+            amount=int(1e17),
+            gas_limit=int(1e6),
+            gas_price=int(1e9),
             data=b"",
             nonce=0,
         )
@@ -32,8 +34,8 @@ def test_mainnet_send(yield_dongle):
 
     with yield_dongle() as dongle:
         signed = create_transaction(
-            to="0xf0155486a14539f784739be1c02e93f28eb8e960",
-            value=int(1e17),
+            destination="0xf0155486a14539f784739be1c02e93f28eb8e960",
+            amount=int(1e17),
             gas=int(1e6),
             gas_price=int(1e9),
             data="",
@@ -53,8 +55,8 @@ def test_rinkeby_send(yield_dongle):
 
     with yield_dongle() as dongle:
         signed = create_transaction(
-            to="0xf0155486a14539f784739be1c02e93f28eb8e960",
-            value=int(1e17),
+            destination="0xf0155486a14539f784739be1c02e93f28eb8e960",
+            amount=int(1e17),
             gas=int(1e6),
             gas_price=int(1e9),
             data="",
@@ -68,19 +70,46 @@ def test_rinkeby_send(yield_dongle):
         assert signed.s
 
 
+def test_eip2930_send(yield_dongle):
+    """Test a type 1 (EIP-2930) transaction"""
+    CHAIN_ID = 3
+    address = "0xb2bb2b958afa2e96dab3f3ce7162b87daea39017"
+    gas_price = int(1e9)
+
+    with yield_dongle() as dongle:
+        # Matches tx from app-ethereum tests
+        signed = create_transaction(
+            destination=address,
+            amount=int(1e16),  # 0.01 ETH
+            gas=21000,
+            gas_price=gas_price,
+            data="",
+            nonce=42,
+            chain_id=CHAIN_ID,
+            access_list=[(address, [1, 2, 3])],
+            dongle=dongle,
+        )
+
+        assert signed.gas_price == gas_price
+        # Transactions after EIP-2930 use a parity byte instead of "v"
+        assert signed.y_parity in (0, 1)
+        assert signed.sender_r
+        assert signed.sender_s
+
+
 def test_eip1559_send(yield_dongle):
     """Test a type 2 (EIP-1559) transaction"""
     CHAIN_ID = 3
-    priority_fee_per_gas = int(1e9)
+    max_priority_fee_per_gas = int(1e9)
     max_fee_per_gas = int(20e9)
 
     with yield_dongle() as dongle:
         # Matches tx from app-ethereum tests
         signed = create_transaction(
-            to="0xb2bb2b958afa2e96dab3f3ce7162b87daea39017",
-            value=int(1e16),  # 0.01 ETH
+            destination="0xb2bb2b958afa2e96dab3f3ce7162b87daea39017",
+            amount=int(1e16),  # 0.01 ETH
             gas=21000,
-            priority_fee_per_gas=priority_fee_per_gas,
+            max_priority_fee_per_gas=max_priority_fee_per_gas,
             max_fee_per_gas=max_fee_per_gas,
             data="",
             nonce=6,
@@ -88,9 +117,9 @@ def test_eip1559_send(yield_dongle):
             dongle=dongle,
         )
 
-        assert signed.max_priority_fee_per_gas == priority_fee_per_gas
+        assert signed.max_priority_fee_per_gas == max_priority_fee_per_gas
         assert signed.max_fee_per_gas == max_fee_per_gas
         # Transactions after EIP-2930 use a parity byte instead of "v"
-        assert signed.y_parity in (1, 2)
+        assert signed.y_parity in (0, 1)
         assert signed.sender_r
         assert signed.sender_s
