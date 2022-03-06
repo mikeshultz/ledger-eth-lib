@@ -248,7 +248,7 @@ def create_transaction(
     return signed
 
 
-def decode_transaction(rawtx: bytes) -> SerializableTransaction:
+def decode_transaction(rawtx: bytes, signed=False) -> SerializableTransaction:
     """Decode a raw transaction to a Serializable transaction object"""
     tx_type = rawtx[0]
 
@@ -256,14 +256,20 @@ def decode_transaction(rawtx: bytes) -> SerializableTransaction:
 
     if tx_type < 127:
         if tx_type == 1:
-            tx = Type1Transaction.from_rawtx(rawtx)
+            if signed:
+                return SignedType1Transaction.from_rawtx(rawtx)
+            else:
+                return Type1Transaction.from_rawtx(rawtx)
         elif tx_type == 2:
-            tx = Type2Transaction.from_rawtx(rawtx)
+            if signed:
+                return SignedType2Transaction.from_rawtx(rawtx)
+            else:
+                return Type2Transaction.from_rawtx(rawtx)
         else:
             raise NotImplementedError(
                 f"Support for transaction type {tx_type} has not yet been implemented"
             )
-    else:
-        tx = Transaction.from_rawtx(rawtx)
+    elif signed:
+        return SignedTransaction.from_rawtx(rawtx)
 
-    return tx
+    return Transaction.from_rawtx(rawtx)
