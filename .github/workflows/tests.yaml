@@ -13,15 +13,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e .[dev]
       - run: black --check .
-      - run: isort --check .
+      - run: isort --profile black --check .
 
   test:
+    needs: lint
     strategy:
       matrix:
         python-version:
-          - 3.8
-          - 3.9
-          - 3.10
+          - "3.8"
+          - "3.9"
+          - "3.10"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
