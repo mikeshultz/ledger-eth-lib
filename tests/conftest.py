@@ -17,18 +17,16 @@ USE_REAL_DONGLE = os.environ.get("USE_REAL_DONGLE") is not None
 Account.enable_unaudited_hdwallet_features()
 
 
-def random_bytes(l: int) -> bytes:
-    return os.urandom(l)
-
-
 def get_account_by_path(path: bytes) -> Account:
+    """Get a test account by derivation path"""
     path_string = decode_bip32_path(path)
     return Account.from_mnemonic(TEST_MNEMONIC, account_path=f"m/{path_string}")
 
 
 class MockDongle:
-    """Attempts to act like an actual ledger dongle for the sake of not requiring user-intervention
-    for every single test with a real ledger attached.
+    """Attempts to act like an actual Ledger dongle for the sake of not
+    requiring user-intervention for every single test with a real ledger
+    attached.
     """
 
     def __init__(self):
@@ -43,10 +41,11 @@ class MockDongle:
         tx = decode_transaction(encoded_tx)
         resp = self.account.sign_transaction(tx.to_rpc_dict())
 
-        # TODO: It's been a long day ad I feel like I'm losing my shit. I
-        # thought I knew how v and y worked but now I'm fudging these numbers to
-        # match what is expected from the Ledger and I'm not entirely sure why.
-        # Should revisit this at some point.
+        """TODO: It's been a long day ad I feel like I'm losing my shit. I
+        thought I knew how v and y worked but now I'm fudging these numbers to
+        match what is expected from the Ledger and I'm not entirely sure why.
+        Should revisit this at some point.
+        """
         if (tx.chain_id * 2 + 35) + 1 > 255:
             ledger_v = resp.v - MAGIC_NUMBER
         elif resp.v > 1:
@@ -64,6 +63,7 @@ class MockDongle:
         return bytearray(v + r + s)
 
     def handle_get_configuration(self, lc, data):
+        # Return version 9.9.9
         return bytearray(b"\x00\x09\x09\x09")
 
     def handle_get_address(self, lc, data):
@@ -71,14 +71,19 @@ class MockDongle:
         encoded_path = data[1 : lc + 1]
         account = get_account_by_path(encoded_path)
         path = decode_bip32_path(encoded_path)
-        junk = random_bytes(64)
+
+        # This "junk" might mean something in the actual Ledger response, but I
+        # don't know what it is and it's not needed to get the address.
+        junk = os.urandom(64)
         offset = len(junk)
+
         resp = bytearray(
             offset.to_bytes(1, "big")
             + junk
             + b"("  # 40 chars/20 bytes?
             + account.address[2:].encode("utf-8")
         )
+
         return resp
 
     def handle_tx_first_data(self, lc, data):
