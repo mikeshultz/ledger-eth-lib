@@ -2,14 +2,12 @@ import re
 import struct
 from typing import Any, Callable, Dict, List, Optional, Type
 
+from ledgereth.constants import DEFAULTS
+
 # 44'/60'/0'/0/x
 BIP32_ETH_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+/[0-9]+$"
 BIP32_LEGACY_LEDGER_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+$"
 
-DEFAULTS: Dict[Type, Any] = {
-    int: 0,
-    bytes: b"",
-}
 COERCERS: Dict[Type, Callable] = {int: lambda v: int.from_bytes(v, "big")}
 
 
@@ -68,13 +66,6 @@ def decode_bip32_path(path: bytes) -> str:
             parts.append(f"{part}'")
 
     return "/".join(parts)
-
-
-def get_int_from_dict(d: Dict[Any, int], k: Any, default: int = None) -> Optional[int]:
-    """Get an int from a dict-like object"""
-    if not hasattr(d, "get"):
-        raise ValueError("Object given to get_int_from_dict is not dict-like")
-    return d.get(k, default)
 
 
 def coerce_list_types(types: List[Type], to_coerce: List[Any]) -> List[Any]:
