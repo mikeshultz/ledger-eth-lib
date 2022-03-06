@@ -23,3 +23,9 @@ if LEGACY_ACCOUNTS:
     DEFAULT_PATH_ENCODED = parse_bip32_path(DEFAULT_PATH_STRING)
 DEFAULT_PATH = remove_0x_prefix(DEFAULT_PATH_ENCODED.hex())
 VRS_RETURN_LENGTH = int(65).to_bytes(1, "big")
+
+# Data size expected from Ledger
+DATA_CHUNK_SIZE = 255
+
+# Ethereum magic number
+MAGIC_NUMBER = 27

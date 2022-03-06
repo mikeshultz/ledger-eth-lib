@@ -20,7 +20,11 @@ from ledgereth.comms import (
     dongle_send,
     dongle_send_data,
 )
-from ledgereth.constants import DEFAULT_PATH_ENCODED
+from ledgereth.constants import (
+    DATA_CHUNK_SIZE,
+    DEFAULT_PATH_ENCODED,
+    DEFAULT_PATH_STRING,
+)
 from ledgereth.objects import SignedTransaction, Transaction
 from ledgereth.utils import parse_bip32_path
 
@@ -77,17 +81,17 @@ def test_comms_multiple_accounts(yield_dongle):
 
 
 def test_comms_sign_small_tx(yield_dongle):
-    CHAIN_ID = 1
+    chain_id = 1
 
     with yield_dongle() as dongle:
         tx = Transaction(
-            to=decode_hex("0xf0155486a14539f784739be1c02e93f28eb8e960"),
-            value=int(1e17),
-            startgas=int(1e6),
-            gasprice=int(1e9),
+            destination=decode_hex("0xf0155486a14539f784739be1c02e93f28eb8e960"),
+            amount=int(1e17),
+            gas_limit=int(1e6),
+            gas_price=int(1e9),
             data=b"",
             nonce=0,
-            chainid=CHAIN_ID,
+            chain_id=chain_id,
         )
         encoded_tx = rlp.encode(tx, Transaction)
         # TODO: Never did figure out what the path count prefix was about
@@ -105,32 +109,33 @@ def test_comms_sign_small_tx(yield_dongle):
 
         assert type(vrsbytes) == bytearray
 
-        if (CHAIN_ID * 2 + 35) + 1 > 255:
-            ecc_parity = vrsbytes[0] - ((CHAIN_ID * 2 + 35) % 256)
-            v = (CHAIN_ID * 2 + 35) + ecc_parity
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = vrsbytes[0] - ((chain_id * 2 + 35) % 256)
+            v = (chain_id * 2 + 35) + ecc_parity
         else:
             v = vrsbytes[0]
 
         r = binascii.hexlify(vrsbytes[1:33])
         s = binascii.hexlify(vrsbytes[33:65])
 
-        assert v in [(CHAIN_ID * 2 + 35) + x for x in (0, 1)]
+        assert v in [(chain_id * 2 + 35) + x for x in (0, 1)]
+        # assert v in [27, 28]
         assert r  # TODO: What's an invalid value here?
         assert s  # TODO: What's an invalid value here?
 
 
 def test_comms_sign_large_tx(yield_dongle):
-    CHAIN_ID = 1  # eh?
+    chain_id = 1  # eh?
     chunk_count = 0
     retval = None
     txdata = "0x29589f61000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee00000000000000000000000000000000000000000000000001628c8b11e853c40000000000000000000000000f5d2fb29fb7d3cfee444a200298f468908cc9420000000000000000000000009283099a29556fcf8fff5b2cea2d4f67cb7a7a8b8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000107345af81329fe1a05000000000000000000000000440bbd6a888a36de6e2f6a25f65bc4e16874faa9000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000045045524d00000000000000000000000000000000000000000000000000000000"
 
     with yield_dongle() as dongle:
         tx = Transaction(
-            to=decode_hex("0xf0155486a14539f784739be1c02e93f28eb8e960"),
-            value=int(1e17),
-            startgas=int(1e6),
-            gasprice=int(1e9),
+            destination=decode_hex("0xf0155486a14539f784739be1c02e93f28eb8e960"),
+            amount=int(1e17),
+            gas_limit=int(1e6),
+            gas_price=int(1e9),
             data=decode_hex(txdata),
             nonce=1234,
         )
@@ -141,7 +146,7 @@ def test_comms_sign_large_tx(yield_dongle):
             + encoded_tx
         )
 
-        for chunk in chunks(payload):
+        for chunk in chunks(payload, DATA_CHUNK_SIZE):
             chunk_size = len(chunk)
             if chunk_count == 0:
                 retval = dongle_send_data(
@@ -159,24 +164,24 @@ def test_comms_sign_large_tx(yield_dongle):
                 )
             chunk_count += 1
 
-        if (CHAIN_ID * 2 + 35) + 1 > 255:
-            ecc_parity = retval[0] - ((CHAIN_ID * 2 + 35) % 256)
-            v = (CHAIN_ID * 2 + 35) + ecc_parity
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = retval[0] - ((chain_id * 2 + 35) % 256)
+            v = (chain_id * 2 + 35) + ecc_parity
         else:
             v = retval[0]
 
         r = binascii.hexlify(retval[1:33])
         s = binascii.hexlify(retval[33:65])
 
-        assert v in [(CHAIN_ID * 2 + 35) + x for x in (0, 1)]
+        assert v in [(chain_id * 2 + 35) + x for x in (0, 1)]
         assert r  # TODO: What's an invalid value here?
         assert s  # TODO: What's an invalid value here?
 
         signed_tx_obj = SignedTransaction(
-            to=decode_hex("0x818e6fecd516ecc3849daf6845e3ec868087b755"),
-            value=int(1e17),
-            startgas=int(4e6),
-            gasprice=int(3e9),
+            destination=decode_hex("0x818e6fecd516ecc3849daf6845e3ec868087b755"),
+            amount=int(1e17),
+            gas_limit=int(4e6),
+            gas_price=int(3e9),
             data=decode_hex(txdata),
             nonce=1,
             v=v,

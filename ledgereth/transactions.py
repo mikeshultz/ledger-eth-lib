@@ -1,12 +1,18 @@
 import binascii
+from abc import ABC
 from typing import Any, List, Optional, Tuple, Union
 
 from eth_utils import decode_hex
-from rlp import Serializable, encode
+from rlp import Serializable, decode, encode
 
 from ledgereth.comms import chunks, dongle_send_data, init_dongle
-from ledgereth.constants import DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
+from ledgereth.constants import (
+    DATA_CHUNK_SIZE,
+    DEFAULT_CHAIN_ID,
+    DEFAULT_PATH_STRING,
+)
 from ledgereth.objects import (
+    SerializableTransaction,
     SignedTransaction,
     SignedType1Transaction,
     SignedType2Transaction,
@@ -68,13 +74,9 @@ def sign_transaction(
     if isinstance(tx, Transaction):
         encoded_tx = encode(tx, Transaction)
     elif isinstance(tx, Type1Transaction):
-        encoded_tx = tx.transaction_type.to_byte() + encode(
-            tx, Type1Transaction
-        )
+        encoded_tx = tx.transaction_type.to_byte() + encode(tx, Type1Transaction)
     elif isinstance(tx, Type2Transaction):
-        encoded_tx = tx.transaction_type.to_byte() + encode(
-            tx, Type2Transaction
-        )
+        encoded_tx = tx.transaction_type.to_byte() + encode(tx, Type2Transaction)
     else:
         raise ValueError(
             "Only Transaction and Type2Transaction objects are currently supported"
@@ -87,7 +89,7 @@ def sign_transaction(
     payload = (len(path) // 4).to_bytes(1, "big") + path + encoded_tx
 
     chunk_count = 0
-    for chunk in chunks(payload):
+    for chunk in chunks(payload, DATA_CHUNK_SIZE):
         chunk_size = len(chunk)
         if chunk_count == 0:
             retval = dongle_send_data(
@@ -248,3 +250,24 @@ def create_transaction(
         dongle.close()
 
     return signed
+
+
+def decode_transaction(rawtx: bytes) -> SerializableTransaction:
+    """Decode a raw transaction to a Serializable transaction object"""
+    tx_type = rawtx[0]
+
+    tx = None
+
+    if tx_type < 127:
+        if tx_type == 1:
+            tx = Type1Transaction.from_rawtx(rawtx)
+        elif tx_type == 2:
+            tx = Type2Transaction.from_rawtx(rawtx)
+        else:
+            raise NotImplementedError(
+                f"Support for transaction type {tx_type} has not yet been implemented"
+            )
+    else:
+        tx = Transaction.from_rawtx(rawtx)
+
+    return tx
