@@ -5,7 +5,7 @@ from enum import IntEnum
 from typing import List, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
-from rlp import Serializable, encode, decode
+from rlp import Serializable, decode, encode
 from rlp.sedes import BigEndianInt, Binary, CountableList
 from rlp.sedes import List as ListSedes
 from rlp.sedes import big_endian_int, binary
