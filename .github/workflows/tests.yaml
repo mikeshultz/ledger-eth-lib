@@ -1,0 +1,30 @@
+on: 
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: black --check .
+      - run: isort --check .
+
+  test:
+    strategy:
+      matrix:
+        python-version:
+          - 3.8
+          - 3.9
+          - 3.10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pytest
