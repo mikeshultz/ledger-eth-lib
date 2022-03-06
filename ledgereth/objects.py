@@ -5,7 +5,7 @@ from enum import IntEnum
 from typing import List, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
-from rlp import Serializable, decode
+from rlp import Serializable, encode, decode
 from rlp.sedes import BigEndianInt, Binary, CountableList
 from rlp.sedes import List as ListSedes
 from rlp.sedes import big_endian_int, binary
@@ -367,7 +367,7 @@ class SignedTransaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        return encode_hex(rlp.encode(self, SignedTransaction))
+        return encode_hex(encode(self, SignedTransaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
@@ -440,7 +440,7 @@ class SignedType1Transaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        return encode_hex(b"\x02" + rlp.encode(self, SignedType2Transaction))
+        return encode_hex(b"\x02" + encode(self, SignedType1Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
@@ -529,7 +529,7 @@ class SignedType2Transaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        return encode_hex(b"\x02" + rlp.encode(self, SignedType2Transaction))
+        return encode_hex(b"\x02" + encode(self, SignedType2Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
