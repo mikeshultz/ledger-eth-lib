@@ -16,7 +16,6 @@ jobs:
       - run: isort --profile black --check .
 
   test:
-    needs: lint
     strategy:
       matrix:
         python-version:
