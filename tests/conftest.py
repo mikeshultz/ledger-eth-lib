@@ -2,9 +2,9 @@ import os
 from contextlib import contextmanager
 
 import pytest
-from ledgerblue.comm import getDongle
-from eth_utils import encode_hex, decode_hex
 from eth_account.account import Account
+from eth_utils import decode_hex, encode_hex
+from ledgerblue.comm import getDongle
 
 from ledgereth.constants import DATA_CHUNK_SIZE, MAGIC_NUMBER
 from ledgereth.transactions import decode_transaction

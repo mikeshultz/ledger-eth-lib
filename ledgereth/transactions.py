@@ -6,11 +6,7 @@ from eth_utils import decode_hex
 from rlp import Serializable, decode, encode
 
 from ledgereth.comms import chunks, dongle_send_data, init_dongle
-from ledgereth.constants import (
-    DATA_CHUNK_SIZE,
-    DEFAULT_CHAIN_ID,
-    DEFAULT_PATH_STRING,
-)
+from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
 from ledgereth.objects import (
     SerializableTransaction,
     SignedTransaction,
