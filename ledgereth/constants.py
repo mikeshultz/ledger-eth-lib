@@ -19,7 +19,7 @@ DEFAULT_CHAIN_ID = 1
 DEFAULT_ACCOUNTS_FETCH = 1
 
 # Number of accounts to fetch when looking up an account by address
-MAX_ACCOUNTS_FETCH = getenvint("MAX_ACCOUNTS_FETCH", "5")
+MAX_ACCOUNTS_FETCH = getenvint("MAX_ACCOUNTS_FETCH", 5)
 
 # Whether to use the legacy bip32 path derivation used by Ledger Chrome app
 LEGACY_ACCOUNTS = os.getenv("LEDGER_LEGACY_ACCOUNTS") is not None
