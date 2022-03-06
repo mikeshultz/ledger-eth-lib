@@ -250,8 +250,10 @@ class Type1Transaction(SerializableTransaction):
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> Type1Transaction:
         """Instantiate a Type1Transaction object from a raw encoded transaction"""
-        if rawtx[0] != 1:
-            raise ValueError("Transaction is not a type 1 transaction")
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
 
         return Type1Transaction(
             *coerce_list_types(
@@ -309,8 +311,10 @@ class Type2Transaction(SerializableTransaction):
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> Type2Transaction:
         """Instantiate a Type2Transaction object from a raw encoded transaction"""
-        if rawtx[0] != 2:
-            raise ValueError("Transaction is not a type 2 transaction")
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
 
         return Type2Transaction(
             *coerce_list_types(
@@ -423,8 +427,10 @@ class SignedType1Transaction(SerializableTransaction):
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> SignedType1Transaction:
         """Instantiate a SignedType1Transaction object from a raw encoded transaction"""
-        if rawtx[0] != 1:
-            raise ValueError("Transaction is not a type 1 transaction")
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
 
         return SignedType1Transaction(
             *coerce_list_types(
@@ -497,8 +503,10 @@ class SignedType2Transaction(SerializableTransaction):
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> SignedType2Transaction:
         """Instantiate a SignedType2Transaction object from a raw encoded transaction"""
-        if rawtx[0] != 1:
-            raise ValueError("Transaction is not a type 2 transaction")
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
 
         return SignedType2Transaction(
             *coerce_list_types(
