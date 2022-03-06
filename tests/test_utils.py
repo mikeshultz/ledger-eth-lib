@@ -1,7 +1,6 @@
 from ledgereth.constants import DEFAULT_PATH_ENCODED, DEFAULT_PATH_STRING
 from ledgereth.utils import (
     decode_bip32_path,
-    get_int_from_dict,
     is_bip32_path,
     is_bytes,
     is_hex_string,
@@ -30,10 +29,3 @@ def test_path_encoding():
     assert encoded == DEFAULT_PATH_ENCODED
     decoded = decode_bip32_path(encoded)
     assert decoded == DEFAULT_PATH_STRING
-
-
-def test_get_int_from_dict():
-    """Test get_int_from_dict()"""
-    td = {"one": 1}
-    assert 1 == get_int_from_dict(td, "one", 1337)
-    assert 1337 == get_int_from_dict(td, "two", 1337)
