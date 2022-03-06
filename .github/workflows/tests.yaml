@@ -11,6 +11,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - run: pip install -e .[dev]
       - run: black --check .
       - run: isort --check .
 
@@ -27,4 +28,5 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - run: pip install -e .[dev]
       - run: pytest
