@@ -11,7 +11,13 @@ from rlp.sedes import List as ListSedes
 from rlp.sedes import big_endian_int, binary
 
 from ledgereth.constants import DEFAULT_CHAIN_ID
-from ledgereth.utils import coerce_list_types, is_bip32_path, is_bytes, parse_bip32_path
+from ledgereth.utils import (
+    coerce_list_types,
+    is_bip32_path,
+    is_bytes,
+    is_optional_bytes,
+    parse_bip32_path,
+)
 
 address = Binary.fixed_length(20, allow_empty=False)
 access_list_sede_type = CountableList(
@@ -67,16 +73,16 @@ class ISO7816Command:
         Le: bytes = None,
         data: bytes = None,
     ):
-        try:
-            assert is_bytes(CLA)
-            assert is_bytes(INS)
-            assert is_bytes(P1)
-            assert is_bytes(P2)
-            assert is_bytes(Lc) or Lc is None
-            assert is_bytes(Le) or Le is None
-            assert is_bytes(data) or data is None
-        except AssertionError:
-            raise ValueError("Command parts must be type bytes")
+        if not (
+            is_bytes(CLA)
+            and is_bytes(INS)
+            and is_bytes(P1)
+            and is_bytes(P2)
+            and is_optional_bytes(Lc)
+            and is_optional_bytes(Le)
+            and is_optional_bytes(data)
+        ):
+            raise TypeError("Command parts must be type bytes")
 
         self.CLA = CLA
         self.INS = INS

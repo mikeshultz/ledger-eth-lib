@@ -121,7 +121,9 @@ def dongle_send_data(
 
 def chunks(it: bytes, chunk_size: int):
     """Iterate bytes(it) into chunks of chunk_size"""
-    assert isinstance(it, bytes)
+
+    if not isinstance(it, bytes):
+        raise TypeError("iterable argument must be type bytes")
 
     it_size = len(it)
 
@@ -175,8 +177,7 @@ def init_dongle(dongle: Any = None, debug: bool = False):
     if DONGLE_CONFIG_CACHE is None or dongle is not None:
         DONGLE_CONFIG_CACHE = dongle_send(dong, "GET_CONFIGURATION")
 
-    assert is_usable_version(
-        DONGLE_CONFIG_CACHE
-    ), "Unsupported firmware version.  Unable to continue!"
+    if not is_usable_version(DONGLE_CONFIG_CACHE):
+        raise NotImplementedError("Unsupported firmware version")
 
     return dong
