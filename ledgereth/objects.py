@@ -1,20 +1,17 @@
-import rlp
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import List, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
-from rlp.sedes import (
-    BigEndianInt,
-    Binary,
-    CountableList,
-    List as ListSedes,
-    big_endian_int,
-    binary,
-)
+from rlp import Serializable, decode, encode
+from rlp.sedes import BigEndianInt, Binary, CountableList
+from rlp.sedes import List as ListSedes
+from rlp.sedes import big_endian_int, binary
 
 from ledgereth.constants import DEFAULT_CHAIN_ID
-from ledgereth.utils import is_bip32_path, is_bytes, parse_bip32_path
-
+from ledgereth.utils import coerce_list_types, is_bip32_path, is_bytes, parse_bip32_path
 
 address = Binary.fixed_length(20, allow_empty=False)
 access_list_sede_type = CountableList(
@@ -25,6 +22,26 @@ access_list_sede_type = CountableList(
         ]
     ),
 )
+RPC_TX_PROP_TRANSLATION = {
+    "gas_price": "gasPrice",
+    "gas_limit": "gas",
+    "amount": "value",
+    "destination": "to",
+    "max_priority_fee_per_gas": "maxPriorityFeePerGas",
+    "max_fee_per_gas": "maxFeePerGas",
+}
+RPC_TX_PROPS = [
+    "from",
+    "to",
+    "gas",
+    "gasPrice",
+    "value",
+    "data",
+    "nonce",
+    "maxFeePerGas",
+    "maxPriorityFeePerGas",
+    "chainId",
+]
 
 
 class TransactionType(IntEnum):
@@ -106,7 +123,35 @@ class LedgerAccount:
         self.address = to_checksum_address(address)
 
 
-class Transaction(rlp.Serializable):
+class SerializableTransaction(Serializable):
+    @classmethod
+    @abstractmethod
+    def from_rawtx(cls, rawtx: bytes) -> SerializableTransaction:
+        """Instantiates a SerializableTransaction given a raw encoded
+        transaction"""
+        pass
+
+    def to_dict(self) -> dict:
+        d = {}
+        for name, _ in self.__class__._meta.fields:
+            d[name] = getattr(self, name)
+        return d
+
+    def to_rpc_dict(self) -> dict:
+        """To a dict compatible with web3.py"""
+        d = {}
+        for name, _ in self.__class__._meta.fields:
+            key = (
+                RPC_TX_PROP_TRANSLATION[name]
+                if name in RPC_TX_PROP_TRANSLATION
+                else name
+            )
+            if key in RPC_TX_PROPS:
+                d[key] = getattr(self, name)
+        return d
+
+
+class Transaction(SerializableTransaction):
     """Unsigned legacy or EIP-155 transaction"""
 
     fields = [
@@ -147,14 +192,20 @@ class Transaction(rlp.Serializable):
             dummy2,
         )
 
-    def to_dict(self) -> dict:
-        d = {}
-        for name, _ in self.__class__._meta.fields:
-            d[name] = getattr(self, name)
-        return d
+    @classmethod
+    def from_rawtx(cls, rawtx: bytes) -> Transaction:
+        """Instantiate a Transaction object from a raw encoded transaction"""
+        if rawtx[0] < 127:
+            raise ValueError("Transaction is not a legacy transaction")
+
+        return Transaction(
+            *coerce_list_types(
+                [int, int, int, bytes, int, bytes, int, int, int], decode(rawtx)
+            )
+        )
 
 
-class Type1Transaction(rlp.Serializable):
+class Type1Transaction(SerializableTransaction):
     """An unsigned Type 1 transaction.
 
     Format spec:
@@ -196,14 +247,23 @@ class Type1Transaction(rlp.Serializable):
             access_list,
         )
 
-    def to_dict(self) -> dict:
-        d = {}
-        for name, _ in self.__class__._meta.fields:
-            d[name] = getattr(self, name)
-        return d
+    @classmethod
+    def from_rawtx(cls, rawtx: bytes) -> Type1Transaction:
+        """Instantiate a Type1Transaction object from a raw encoded transaction"""
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
+
+        return Type1Transaction(
+            *coerce_list_types(
+                [int, int, int, int, bytes, int, bytes, None],
+                decode(rawtx[1:]),
+            )
+        )
 
 
-class Type2Transaction(rlp.Serializable):
+class Type2Transaction(SerializableTransaction):
     """An unsigned Type 2 transaction.
 
     Format spec:
@@ -248,14 +308,23 @@ class Type2Transaction(rlp.Serializable):
             access_list,
         )
 
-    def to_dict(self) -> dict:
-        d = {}
-        for name, _ in self.__class__._meta.fields:
-            d[name] = getattr(self, name)
-        return d
+    @classmethod
+    def from_rawtx(cls, rawtx: bytes) -> Type2Transaction:
+        """Instantiate a Type2Transaction object from a raw encoded transaction"""
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
+
+        return Type2Transaction(
+            *coerce_list_types(
+                [int, int, int, int, int, bytes, int, bytes, None],
+                decode(rawtx[1:]),
+            )
+        )
 
 
-class SignedTransaction(rlp.Serializable):
+class SignedTransaction(SerializableTransaction):
     """Signed legacy or EIP-155 transaction"""
 
     fields = [
@@ -287,20 +356,24 @@ class SignedTransaction(rlp.Serializable):
             nonce, gas_price, gas_limit, destination, amount, data, v, r, s
         )
 
-    def to_dict(self) -> dict:
-        d = {}
-        for name, _ in self.__class__._meta.fields:
-            d[name] = getattr(self, name)
-        return d
+    @classmethod
+    def from_rawtx(cls, rawtx: bytes) -> SignedTransaction:
+        """Instantiate a SignedTransaction object from a raw encoded transaction"""
+        if rawtx[0] < 127:
+            raise ValueError("Transaction is not a legacy transaction")
+
+        return SignedTransaction(
+            *coerce_list_types([int, int, int, int, bytes, int, bytes], decode(rawtx))
+        )
 
     def raw_transaction(self):
-        return encode_hex(rlp.encode(self, SignedTransaction))
+        return encode_hex(encode(self, SignedTransaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
 
 
-class SignedType1Transaction(rlp.Serializable):
+class SignedType1Transaction(SerializableTransaction):
     """A signed Type 1 transaction.
 
     Format spec:
@@ -351,20 +424,29 @@ class SignedType1Transaction(rlp.Serializable):
             sender_s,
         )
 
-    def to_dict(self) -> dict:
-        d = {}
-        for name, _ in self.__class__._meta.fields:
-            d[name] = getattr(self, name)
-        return d
+    @classmethod
+    def from_rawtx(cls, rawtx: bytes) -> SignedType1Transaction:
+        """Instantiate a SignedType1Transaction object from a raw encoded transaction"""
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
+
+        return SignedType1Transaction(
+            *coerce_list_types(
+                [int, int, int, int, bytes, int, bytes, None, int, int, int],
+                decode(rawtx[1:]),
+            )
+        )
 
     def raw_transaction(self):
-        return encode_hex(b"\x02" + rlp.encode(self, SignedType2Transaction))
+        return encode_hex(b"\x02" + encode(self, SignedType1Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
 
 
-class SignedType2Transaction(rlp.Serializable):
+class SignedType2Transaction(SerializableTransaction):
     """A signed Type 2 transaction.
 
     Format spec:
@@ -418,19 +500,36 @@ class SignedType2Transaction(rlp.Serializable):
             sender_s,
         )
 
-    def to_dict(self) -> dict:
-        d = {}
-        for name, _ in self.__class__._meta.fields:
-            d[name] = getattr(self, name)
-        return d
+    @classmethod
+    def from_rawtx(cls, rawtx: bytes) -> SignedType2Transaction:
+        """Instantiate a SignedType2Transaction object from a raw encoded transaction"""
+        if rawtx[0] != cls.transaction_type:
+            raise ValueError(
+                f"Transaction is not a type {cls.transaction_type} transaction"
+            )
+
+        return SignedType2Transaction(
+            *coerce_list_types(
+                [
+                    int,
+                    int,
+                    int,
+                    int,
+                    int,
+                    bytes,
+                    int,
+                    bytes,
+                    None,
+                    int,
+                    int,
+                    int,
+                ],
+                decode(rawtx[1:]),
+            )
+        )
 
     def raw_transaction(self):
-        return encode_hex(b"\x02" + rlp.encode(self, SignedType2Transaction))
+        return encode_hex(b"\x02" + encode(self, SignedType2Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
-
-
-# Compat: Depreciated
-RLPTx = Transaction
-RLPSignedTx = SignedTransaction

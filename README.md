@@ -96,8 +96,6 @@ Sign a `Transaction` object from pyethereum(or similar RLP serializable):
 
 ## TODO
 
-- Add fake dongle support to pytest suite so tests can be run without a real Ledger and human interaction
 - Fill out tests
 - Add messaging signing support
 - Add ERC-712 messaging signing support
-- Add type 1 transactions (EIP-2930 access list)

@@ -129,9 +129,7 @@ def print_accounts(dongle, args):
 
 
 def send_value(dongle, args):
-    print(
-        f"Sending {args.wei} ETH from {args.from_address} to {args.to_address}"
-    )
+    print(f"Sending {args.wei} ETH from {args.from_address} to {args.to_address}")
 
     account = find_account(args.from_address, dongle)
 
@@ -141,9 +139,7 @@ def send_value(dongle, args):
         sys.exit(ExitCodes.INVALID_ARGUMENT)
 
     if not args.gasprice and not args.max_fee:
-        print(
-            "Either --gasprice or --max-fee must be provided", file=sys.stderr
-        )
+        print("Either --gasprice or --max-fee must be provided", file=sys.stderr)
         dongle.close()
         sys.exit(ExitCodes.INVALID_ARGUMENT)
 

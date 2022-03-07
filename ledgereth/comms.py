@@ -33,8 +33,7 @@ class LedgerCommands:
         P1=b"\x00",  # 0x00 - Return addres | 0x01 - Confirm befor ereturning
         P2=b"\x00",  # 0x00 - No chain code | 0x01 - With chain code
         Lc=len(DEFAULT_PATH_ENCODED).to_bytes(1, "big"),  # Payload byte length
-        data=(len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, "big")
-        + DEFAULT_PATH_ENCODED,
+        data=(len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, "big") + DEFAULT_PATH_ENCODED,
     )
 
     GET_ADDRESS_NO_CONFIRM = ISO7816Command(
@@ -93,7 +92,7 @@ def translate_exception(exp: Exception) -> Exception:
         return Exception("Please open the Ethereum app on your Ledger device")
     elif "6a80" in string_err:
         return Exception(
-            "General failure: Invalid transaction, contract data not allowed in settings, or"
+            "General failure: Invalid transaction, blind signing not allowed in settings, or"
             " something else?"
         )
     else:
@@ -113,16 +112,14 @@ def dongle_send_data(
     dongle, command_string: str, data: bytes, Lc: bytes = None, Le: bytes = None
 ) -> bytes:
     """Send a command with data to the dongle"""
-    hex_command = LedgerCommands.get_with_data(
-        command_string, data, Lc=Lc, Le=Le
-    )
+    hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)
     try:
         return dongle.exchange(hex_command)
     except CommException as err:
         raise translate_exception(err)
 
 
-def chunks(it: bytes, chunk_size: int = 255):
+def chunks(it: bytes, chunk_size: int):
     """Iterate bytes(it) into chunks of chunk_size"""
     assert isinstance(it, bytes)
 
@@ -159,7 +156,8 @@ def is_usable_version(confbytes: bytes) -> bool:
     version = decode_response_version_from_config(confbytes)
     v_parts = version.split(".")
     ver = [int(s) for s in v_parts]
-    return not any([ver[0] != 1, ver[1] < 2, ver[2] < 4])
+    # v9.9.9 is MockLedger
+    return ver[0] == 9 or not any([ver[0] != 1, ver[1] < 2, ver[2] < 4])
 
 
 def init_dongle(dongle: Any = None, debug: bool = False):
