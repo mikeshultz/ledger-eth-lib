@@ -67,15 +67,18 @@ class ISO7816Command:
         Le: bytes = None,
         data: bytes = None,
     ):
-        try:
-            assert is_bytes(CLA)
-            assert is_bytes(INS)
-            assert is_bytes(P1)
-            assert is_bytes(P2)
-            assert is_bytes(Lc) or Lc is None
-            assert is_bytes(Le) or Le is None
-            assert is_bytes(data) or data is None
-        except AssertionError:
+        if (
+            not is_bytes(CLA)
+            or not is_bytes(INS)
+            or not is_bytes(P1)
+            or not is_bytes(P2)
+            or not is_bytes(Lc)
+            or Lc is None
+            or not is_bytes(Le)
+            or Le is None
+            or not is_bytes(data)
+            or data is None
+        ):
             raise ValueError("Command parts must be type bytes")
 
         self.CLA = CLA
