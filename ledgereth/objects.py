@@ -79,7 +79,7 @@ class ISO7816Command:
             or not is_bytes(data)
             or data is None
         ):
-            raise ValueError("Command parts must be type bytes")
+            raise TypeError("Command parts must be type bytes")
 
         self.CLA = CLA
         self.INS = INS
