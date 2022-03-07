@@ -15,6 +15,10 @@ def is_bytes(v: Any) -> bool:
     return isinstance(v, bytes)
 
 
+def is_optional_bytes(v: Optional[Any]) -> bool:
+    return v is None or is_bytes(v)
+
+
 def is_hex_string(v: Any) -> bool:
     return isinstance(v, str) and v.startswith("0x")
 
