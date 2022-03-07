@@ -1,3 +1,3 @@
 author = "Mike Shultz"
 email = "mike@mikeshultz.com"
-version = "0.5.0"
+version = "0.5.1"
