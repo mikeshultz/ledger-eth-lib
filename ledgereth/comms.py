@@ -131,7 +131,7 @@ def chunks(it: bytes, chunk_size: int):
         yield it
     else:
         chunk_count, remainder = divmod(it_size, chunk_size)
-        for i in range(0, chunk_count, chunk_size):
+        for i in range(0, chunk_count * chunk_size, chunk_size):
             yield it[i : i + chunk_size]
         final_offset = chunk_count * chunk_size
         yield it[final_offset : final_offset + remainder]
