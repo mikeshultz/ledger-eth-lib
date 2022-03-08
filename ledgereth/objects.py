@@ -446,7 +446,7 @@ class SignedType1Transaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        return encode_hex(b"\x02" + encode(self, SignedType1Transaction))
+        return encode_hex(b"\x01" + encode(self, SignedType1Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
