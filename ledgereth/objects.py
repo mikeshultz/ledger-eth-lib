@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from enum import IntEnum
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
 from rlp import Serializable, decode, encode
@@ -35,8 +35,11 @@ RPC_TX_PROP_TRANSLATION = {
     "destination": "to",
     "max_priority_fee_per_gas": "maxPriorityFeePerGas",
     "max_fee_per_gas": "maxFeePerGas",
+    "access_list": "accessList",
+    "chain_id": "chainId",
 }
 RPC_TX_PROPS = [
+    "chainId",
     "from",
     "to",
     "gas",
@@ -47,6 +50,7 @@ RPC_TX_PROPS = [
     "maxFeePerGas",
     "maxPriorityFeePerGas",
     "chainId",
+    "accessList",
 ]
 
 
@@ -135,25 +139,42 @@ class SerializableTransaction(Serializable):
     def from_rawtx(cls, rawtx: bytes) -> SerializableTransaction:
         """Instantiates a SerializableTransaction given a raw encoded
         transaction"""
-        pass
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         d = {}
         for name, _ in self.__class__._meta.fields:
             d[name] = getattr(self, name)
         return d
 
-    def to_rpc_dict(self) -> dict:
-        """To a dict compatible with web3.py"""
-        d = {}
+    def to_rpc_dict(self) -> Dict[str, Any]:
+        """To a dict compatible with web3.py or JSON-RPC"""
+        d: Dict[str, Any] = {}
+
         for name, _ in self.__class__._meta.fields:
             key = (
                 RPC_TX_PROP_TRANSLATION[name]
                 if name in RPC_TX_PROP_TRANSLATION
                 else name
             )
+
             if key in RPC_TX_PROPS:
-                d[key] = getattr(self, name)
+                # Need to format an access list differently for web3/RPC-like
+                # objects.  It expects a list of objects
+                if key == "accessList":
+                    orig = getattr(self, name)
+                    d[key] = []
+                    for item in orig:
+                        d[key].append(
+                            {
+                                "address": item[0],
+                                "storageKeys": [
+                                    int.from_bytes(slot, "big") for slot in item[1]
+                                ],
+                            }
+                        )
+                else:
+                    d[key] = getattr(self, name)
+
         return d
 
 
@@ -446,7 +467,7 @@ class SignedType1Transaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        return encode_hex(b"\x02" + encode(self, SignedType1Transaction))
+        return encode_hex(b"\x01" + encode(self, SignedType1Transaction))
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)

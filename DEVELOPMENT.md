@@ -1,7 +1,12 @@
 # Development Notes
 
+## Linting
+
+Make sure to lint your work:
+
+    python setup.py lint
+
 ## Release
 
-1) Bump version
-2) Build: `python setup.py sdist bdist_wheel`
-3) Upload to PyPi `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
+1) Bump version (`bump2version patch`).  This will update the version in source and make a commit and version tag.
+2) Merge branch into `master` and release will happen automatically

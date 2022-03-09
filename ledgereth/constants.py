@@ -37,9 +37,6 @@ VRS_RETURN_LENGTH = int(65).to_bytes(1, "big")
 # Data size expected from Ledger
 DATA_CHUNK_SIZE = 255
 
-# Ethereum magic number
-MAGIC_NUMBER = 27
-
 # Default "zero" values in EVM/Solidity
 DEFAULTS: Dict[Type, Any] = {
     int: 0,

@@ -119,24 +119,6 @@ def dongle_send_data(
         raise translate_exception(err)
 
 
-def chunks(it: bytes, chunk_size: int):
-    """Iterate bytes(it) into chunks of chunk_size"""
-
-    if not isinstance(it, bytes):
-        raise TypeError("iterable argument must be type bytes")
-
-    it_size = len(it)
-
-    if it_size <= chunk_size:
-        yield it
-    else:
-        chunk_count, remainder = divmod(it_size, chunk_size)
-        for i in range(0, chunk_count, chunk_size):
-            yield it[i : i + chunk_size]
-        final_offset = chunk_count * chunk_size
-        yield it[final_offset : final_offset + remainder]
-
-
 def decode_response_version_from_config(confbytes: bytes) -> str:
     """Decode the string version from the bytearray response from Ledger device"""
     return "{}.{}.{}".format(

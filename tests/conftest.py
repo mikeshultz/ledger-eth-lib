@@ -6,8 +6,8 @@ from eth_account.account import Account
 from eth_utils import decode_hex, encode_hex
 from ledgerblue.comm import getDongle
 
-from ledgereth.constants import DATA_CHUNK_SIZE, MAGIC_NUMBER
-from ledgereth.transactions import decode_transaction
+from ledgereth.constants import DATA_CHUNK_SIZE
+from ledgereth.transactions import TransactionType, decode_transaction
 from ledgereth.utils import decode_bip32_path
 
 TEST_MNEMONIC = "test test test test test test test test test test test junk"
@@ -41,19 +41,7 @@ class MockDongle:
         tx = decode_transaction(encoded_tx)
         resp = self.account.sign_transaction(tx.to_rpc_dict())
 
-        """TODO: It's been a long day ad I feel like I'm losing my shit. I
-        thought I knew how v and y worked but now I'm fudging these numbers to
-        match what is expected from the Ledger and I'm not entirely sure why.
-        Should revisit this at some point.
-        """
-        if (tx.chain_id * 2 + 35) + 1 > 255:
-            ledger_v = resp.v - MAGIC_NUMBER
-        elif resp.v > 1:
-            ledger_v = (tx.chain_id * 2 + 35) + (resp.v - MAGIC_NUMBER)
-        else:
-            ledger_v = resp.v
-
-        v = ledger_v.to_bytes(1, "big")
+        v = resp.v.to_bytes(1, "big")
         r = resp.r.to_bytes(32, "big")
         s = resp.s.to_bytes(32, "big")
 

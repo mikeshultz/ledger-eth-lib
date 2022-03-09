@@ -1,7 +1,9 @@
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
+from subprocess import check_call
 
 from setuptools import find_packages, setup
+from setuptools.command.develop import develop
 
 pwd = Path(__file__).parent
 
@@ -16,6 +18,20 @@ def requirements_to_list(filename):
         for dep in pwd.joinpath(filename).open(encoding="utf-8").read().split("\n")
         if (dep and not dep.startswith("#"))
     ]
+
+
+class LintCommand(develop):
+    """Run linting"""
+
+    def run(self):
+        try:
+            check_call("black .".split())
+            check_call("isort --profile black .".split())
+            check_call("autoflake -ir .".split())
+        except CalledProcessError as err:
+            if "non-zero" in str(err):
+                print("linting failed with warnings", file=sys.stderr)
+                sys.exit(1)
 
 
 # Allows us to import the file without executing imports in module __init__
@@ -53,5 +69,8 @@ setup(
             "README.md",
             "LICENSE",
         ],
+    },
+    cmdclass={
+        "lint": LintCommand,
     },
 )
