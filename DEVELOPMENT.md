@@ -8,5 +8,5 @@ Make sure to lint your work:
 
 ## Release
 
-1) Bump version (`bump2version patch`).  This will update the version in source and make a commit and version tag.
+1) Bump version (`bump2version patch`).  This will update the version in source and make a commit and version tag.  Don't forget to push your tags: `git push --tags`.
 2) Merge branch into `master` and release will happen automatically
