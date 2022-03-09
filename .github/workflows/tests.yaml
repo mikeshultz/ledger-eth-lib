@@ -14,6 +14,7 @@ jobs:
       - run: pip install -e .[dev]
       - run: black --check .
       - run: isort --profile black --check .
+      - run: autoflake -cr .
 
   test:
     strategy:
