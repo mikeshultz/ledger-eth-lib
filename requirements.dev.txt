@@ -1,6 +1,7 @@
 black>=21.11b1
 bump2version~=1.0.1
-eth-account~=0.6.1
+# web3[tester] requires eth_account < 0.6.0
+eth-account<0.6.0
 isort>=5.10.1
 mypy>=0.910
 pytest>=5.3.2
