@@ -95,7 +95,7 @@ def decode_access_list(
 
 
 def decode_web3_access_list(
-    access_list: Collection[Dict[str, Union[str | Collection[str]]]]
+    access_list: Collection[Dict[str, Union[str, Collection[str]]]]
 ) -> List[Tuple[bytes, Tuple[int, ...]]]:
     work_list = []
 
