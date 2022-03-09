@@ -27,7 +27,7 @@ class LintCommand(develop):
         try:
             check_call("black .".split())
             check_call("isort --profile black .".split())
-            check_call("autoflake -r .".split())
+            check_call("autoflake -ir .".split())
         except CalledProcessError as err:
             if "non-zero" in str(err):
                 print("linting failed with warnings", file=sys.stderr)
