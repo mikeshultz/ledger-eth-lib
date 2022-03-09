@@ -14,8 +14,13 @@ jobs:
       - run: pip install -e .[dev]
       - run: pytest
 
+  echo-ref:
+    steps:
+      - run: echo "${{ github.ref }}"
+      - run: echo "${{ startsWith(github.ref, 'refs/tags/v') }}"
+
   test-release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: test
     runs-on: ubuntu-latest
     steps:
