@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from enum import IntEnum
 from typing import Any, Dict, List, Tuple
 
@@ -139,7 +139,6 @@ class SerializableTransaction(Serializable):
     def from_rawtx(cls, rawtx: bytes) -> SerializableTransaction:
         """Instantiates a SerializableTransaction given a raw encoded
         transaction"""
-        pass
 
     def to_dict(self) -> Dict[str, Any]:
         d = {}

@@ -1,5 +1,4 @@
 import binascii
-from abc import ABC
 from typing import Any, List, Optional, Tuple, Union
 
 from eth_utils import decode_hex
