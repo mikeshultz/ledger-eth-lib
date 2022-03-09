@@ -1,3 +1,4 @@
+autoflake~=1.4
 black>=21.11b1
 bump2version~=1.0.1
 # web3[tester] requires eth_account < 0.6.0
