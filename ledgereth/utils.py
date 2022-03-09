@@ -1,6 +1,17 @@
 import re
 import struct
-from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from eth_utils import decode_hex
 
@@ -31,6 +42,24 @@ def is_bip32_path(path: str) -> bool:
         re.match(BIP32_ETH_PATTERN, path) is not None
         or re.match(BIP32_LEGACY_LEDGER_PATTERN, path) is not None
     )
+
+
+def chunks(it: bytes, chunk_size: int) -> Generator[bytes, None, None]:
+    """Iterate bytes(it) into chunks of chunk_size"""
+
+    if not isinstance(it, bytes):
+        raise TypeError("iterable argument must be type bytes")
+
+    it_size = len(it)
+
+    if it_size <= chunk_size:
+        yield it
+    else:
+        chunk_count, remainder = divmod(it_size, chunk_size)
+        for i in range(0, chunk_count * chunk_size, chunk_size):
+            yield it[i : i + chunk_size]
+        final_offset = chunk_count * chunk_size
+        yield it[final_offset : final_offset + remainder]
 
 
 def parse_bip32_path(path: str) -> bytes:

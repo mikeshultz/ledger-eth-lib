@@ -8,13 +8,14 @@ TODO
     that ever gets done.
 """
 import binascii
+import os
 import re
 
+import pytest
 import rlp
 from eth_utils import decode_hex, encode_hex
 
 from ledgereth.comms import (
-    chunks,
     decode_response_address,
     decode_response_version_from_config,
     dongle_send,
@@ -26,12 +27,29 @@ from ledgereth.constants import (
     DEFAULT_PATH_STRING,
 )
 from ledgereth.objects import SignedTransaction, Transaction
-from ledgereth.utils import parse_bip32_path
+from ledgereth.utils import chunks, parse_bip32_path
 
 GET_CONFIGURATION = "GET_CONFIGURATION"
 GET_DEFAULT_ADDRESS_NO_CONFIRM = "GET_DEFAULT_ADDRESS_NO_CONFIRM"
 GET_ADDRESS_NO_CONFIRM = "GET_ADDRESS_NO_CONFIRM"
 SIGN_TX_FIRST_DATA = "SIGN_TX_FIRST_DATA"
+
+
+@pytest.mark.parametrize("data_size", [32, 255, 512, 5000])
+def test_chunks(data_size):
+    chunk_size = 255
+    data = os.urandom(data_size)
+    whole_chunks, remainder = divmod(len(data), chunk_size)
+    chunks_count = whole_chunks + (1 if remainder > 0 else 0)
+
+    parts = []
+
+    for chunk in chunks(data, chunk_size):
+        parts.append(chunk)
+
+    assert len(parts) == chunks_count
+    assert len(parts[-1]) == remainder if remainder else True
+    assert b"".join(parts) == data
 
 
 def test_comms_config(yield_dongle):
