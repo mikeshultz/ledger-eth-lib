@@ -1,6 +1,6 @@
 import re
 import struct
-from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Type, Union
 
 from eth_utils import decode_hex
 
@@ -95,7 +95,7 @@ def decode_access_list(
 
 
 def decode_web3_access_list(
-    access_list: Collection[Dict[str, str | Collection[str]]]
+    access_list: Collection[Dict[str, Union[str | Collection[str]]]]
 ) -> List[Tuple[bytes, Tuple[int, ...]]]:
     work_list = []
 
