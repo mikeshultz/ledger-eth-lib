@@ -1,6 +1,8 @@
 import re
 import struct
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Collection, Dict, List, Optional, Tuple, Type
+
+from eth_utils import decode_hex
 
 from ledgereth.constants import DEFAULTS
 
@@ -70,6 +72,94 @@ def decode_bip32_path(path: bytes) -> str:
             parts.append(f"{part}'")
 
     return "/".join(parts)
+
+
+def decode_access_list(
+    access_list: Collection[Tuple[bytes, Collection[bytes]]]
+) -> List[Tuple[bytes, Tuple[int, ...]]]:
+    """Decode an access list into friendly Python types"""
+    work_list = []
+
+    if not access_list or len(access_list) < 1:
+        return []
+
+    for item in access_list:
+        work_slot_list = []
+
+        for slot in item[1]:
+            work_slot_list.append(int.from_bytes(slot, "big"))
+
+        work_list.append((item[0], tuple(work_slot_list)))
+
+    return work_list
+
+
+def decode_web3_access_list(
+    access_list: Collection[Dict[str, str | Collection[str]]]
+) -> List[Tuple[bytes, Tuple[int, ...]]]:
+    work_list = []
+
+    if not access_list or len(access_list) < 1:
+        return []
+
+    for idx, item in enumerate(access_list):
+        if "address" not in item:
+            raise ValueError(f"Access list item at position {idx} missing address")
+
+        if "storageKeys" not in item:
+            raise ValueError(f"Access list item at position {idx} missing storageKeys")
+
+        assert type(item["address"]) == str
+
+        work_list.append(
+            (
+                decode_hex(item["address"]),
+                tuple(
+                    map(
+                        lambda v: int.from_bytes(decode_hex(v), "big"),
+                        tuple(item.get("storageKeys", [])),
+                    )
+                ),
+            )
+        )
+
+    return work_list
+
+
+def coerce_access_list(access_list):
+    """Validate and type coerce an access list from Python friendly values to
+    values for RLP encoding"""
+    if access_list is None:
+        return []
+
+    if type(access_list) != list:
+        raise ValueError("Expected access_list to be a list")
+
+    for i, rule in enumerate(access_list):
+        if type(rule) not in (list, tuple):
+            raise ValueError("Expected access_list rules to be a list or tuple")
+
+        if type(rule) == tuple:
+            access_list[i] = list(rule)
+
+        target, slots = rule
+
+        if is_hex_string(target):
+            access_list[i][0] = decode_hex(target)
+        elif type(target) != bytes:
+            raise ValueError(
+                f"Unexpected type ({type(target)}) for access_list address at index {i}"
+            )
+
+        for j, slot in enumerate(slots):
+            if is_hex_string(slot):
+                access_list[i][1][j] = int(slot, 16)
+            elif type(slot) != int:
+                raise ValueError(
+                    f"Unexpected type ({type(slot)}) for access_list slot at index {j}"
+                )
+
+    return access_list
 
 
 def coerce_list_types(types: List[Type], to_coerce: List[Any]) -> List[Any]:

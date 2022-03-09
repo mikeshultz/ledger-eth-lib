@@ -17,44 +17,14 @@ from ledgereth.objects import (
     Type1Transaction,
     Type2Transaction,
 )
-from ledgereth.utils import is_bip32_path, is_hex_string, parse_bip32_path
+from ledgereth.utils import (
+    coerce_access_list,
+    is_bip32_path,
+    is_hex_string,
+    parse_bip32_path,
+)
 
 Text = Union[str, bytes]
-
-
-def coerce_access_list(access_list):
-    """validate and type coerce an access list"""
-    if access_list is None:
-        return []
-
-    if type(access_list) != list:
-        raise ValueError("Expected access_list to be a list")
-
-    for i, rule in enumerate(access_list):
-        if type(rule) not in (list, tuple):
-            raise ValueError("Expected access_list rules to be a list or tuple")
-
-        if type(rule) == tuple:
-            access_list[i] = list(rule)
-
-        target, slots = rule
-
-        if is_hex_string(target):
-            access_list[i][0] = decode_hex(target)
-        elif type(target) != bytes:
-            raise ValueError(
-                f"Unexpected type ({type(target)}) for access_list address at index {i}"
-            )
-
-        for j, slot in enumerate(slots):
-            if is_hex_string(slot):
-                access_list[i][1][j] = int(slot, 16)
-            elif type(slot) != int:
-                raise ValueError(
-                    f"Unexpected type ({type(slot)}) for access_list slot at index {j}"
-                )
-
-    return access_list
 
 
 def sign_transaction(
@@ -87,6 +57,7 @@ def sign_transaction(
     chunk_count = 0
     for chunk in chunks(payload, DATA_CHUNK_SIZE):
         chunk_size = len(chunk)
+
         if chunk_count == 0:
             retval = dongle_send_data(
                 dongle,
