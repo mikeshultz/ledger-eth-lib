@@ -11,7 +11,6 @@ class LedgerErrorCodes(IntEnum):
     ##
 
     TX_TYPE_UNSUPPORTED = 0x6501
-    # TODO: Following was also seen as app not being opened?
     INCORRECT_LENGTH = 0x6700
     # This may happen if first/secondary data is invalid or out of order or
     # unexpected p1/p2 values

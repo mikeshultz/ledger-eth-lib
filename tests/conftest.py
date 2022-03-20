@@ -1,6 +1,5 @@
 import os
 from contextlib import contextmanager
-from typing import Type
 
 import pytest
 from eth_account.account import Account
