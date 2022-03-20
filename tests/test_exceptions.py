@@ -91,3 +91,13 @@ def test_comms_user_cancel(yield_dongle):
             assert False
         except Exception as err:
             assert isinstance(err, LedgerCancel), f"Unexpected exception: {type(err)}"
+
+
+def test_comms_unknown_error(yield_dongle):
+    with yield_dongle(exception=CommException("TEST", 0xEEEE, 0x00)) as dongle:
+        try:
+            dongle_send(dongle, "SIGN_TX_FIRST_DATA")
+            assert False
+        except Exception as err:
+            assert "UNKNOWN" in str(err)
+            assert isinstance(err, LedgerError), f"Unexpected exception: {type(err)}"

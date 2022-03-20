@@ -4,23 +4,52 @@ from ledgerblue.commException import CommException
 
 
 class LedgerErrorCodes(IntEnum):
+    OK = 0x9000
+
+    ##
+    # User/input errors
+    ##
+
     TX_TYPE_UNSUPPORTED = 0x6501
-    OUTPUT_BUFFER_TOO_SMALL = 0x6502
-    PLUGIN_ERROR = 0x6503
-    INT_CONVERSION_ERROR = 0x6504
     # TODO: Following was also seen as app not being opened?
     INCORRECT_LENGTH = 0x6700
+    # This may happen if first/secondary data is invalid or out of order or
+    # unexpected p1/p2 values
+    INVALID_TX_CHUNKS = 0x6B00
     CANCELED_BY_USER = 0x6982
-    DECLINED = 0x6985
+    # Invalid data, transaction, or HD path, and a bit of a catch-all
     INVALID_DATA = 0x6A80
     APP_SLEEP = 0x6804
     APP_NOT_STARTED = 0x6D00
     DEVICE_LOCKED = 0x6B0C
-    OK = 0x9000
+    # "Plugins" allow resolution of function selectors and args for various
+    # smart contracts.  Ref: https://blog.ledger.com/ethereum-plugins/
+    PLUGIN_NOT_PRESENT = 0x6984
+
+    ##
+    # Internal errors
+    ##
+
+    INT_CONVERSION_ERROR = 0x6504
+    OUTPUT_BUFFER_TOO_SMALL = 0x6502
+    PLUGIN_ERROR = 0x6503
+    # "Signsture/parser not initialized" in source
+    DECLINED = 0x6985
+
+    ##
+    # Inferred errors found through discovery
+    ##
+
     # ledgerblue default code
     UKNOWN = 0x6F00
-    # Inferred errors found through discovery
     APP_NOT_FOUND = 0x6D02
+
+    @classmethod
+    def get_by_value(cls, val):
+        try:
+            return cls(val)
+        except ValueError:
+            return None
 
 
 class LedgerError(Exception):
@@ -32,7 +61,10 @@ class LedgerError(Exception):
     @classmethod
     def transalate_comm_exception(cls, exp: CommException):
         return ERROR_CODE_EXCEPTIONS.get(
-            exp.sw, LedgerError(f"Unexpected error: {hex(exp.sw)}")
+            exp.sw,
+            LedgerError(
+                f"Unexpected error: {hex(exp.sw)} {LedgerErrorCodes.get_by_value(exp.sw) or 'UNKNOWN'}"
+            ),
         )
 
 
