@@ -135,7 +135,11 @@ def init_dongle(dongle: Any = None, debug: bool = False):
     # If not given, use cache if available
     if dong is None:
         if DONGLE_CACHE is None:
-            DONGLE_CACHE = getDongle(debug)
+            try:
+                DONGLE_CACHE = getDongle(debug)
+            except CommException as err:
+                raise LedgerError.transalate_comm_exception(err)
+
         dong = DONGLE_CACHE
 
     # Sanity check the version
