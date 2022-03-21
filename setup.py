@@ -1,7 +1,9 @@
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
+from subprocess import check_call
 
 from setuptools import find_packages, setup
-from importlib.machinery import SourceFileLoader
+from setuptools.command.develop import develop
 
 pwd = Path(__file__).parent
 
@@ -13,18 +15,27 @@ with pwd.joinpath("README.md").open(encoding="utf-8") as f:
 def requirements_to_list(filename):
     return [
         dep
-        for dep in pwd.joinpath(filename)
-        .open(encoding="utf-8")
-        .read()
-        .split("\n")
+        for dep in pwd.joinpath(filename).open(encoding="utf-8").read().split("\n")
         if (dep and not dep.startswith("#"))
     ]
 
 
+class LintCommand(develop):
+    """Run linting"""
+
+    def run(self):
+        try:
+            check_call("black .".split())
+            check_call("isort --profile black .".split())
+            check_call("autoflake -ir .".split())
+        except CalledProcessError as err:
+            if "non-zero" in str(err):
+                print("linting failed with warnings", file=sys.stderr)
+                sys.exit(1)
+
+
 # Allows us to import the file without executing imports in module __init__
-meta = SourceFileLoader(
-    "meta", str(pwd.joinpath("ledgereth/_meta.py"))
-).load_module()
+meta = SourceFileLoader("meta", str(pwd.joinpath("ledgereth/_meta.py"))).load_module()
 
 setup(
     name="ledgereth",
@@ -58,5 +69,8 @@ setup(
             "README.md",
             "LICENSE",
         ],
+    },
+    cmdclass={
+        "lint": LintCommand,
     },
 )
