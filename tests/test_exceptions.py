@@ -1,6 +1,5 @@
 """ Test that exceptions are translated/rendered correctly """
 import pytest
-
 from ledgerblue.commException import CommException
 
 from ledgereth.comms import dongle_send
