@@ -88,7 +88,7 @@ def dongle_send(dongle, command_string: str) -> bytes:
     try:
         return dongle.exchange(hex_command)
     except CommException as err:
-        raise LedgerError.transalate_comm_exception(err)
+        raise LedgerError.transalate_comm_exception(err) from err
 
 
 def dongle_send_data(
@@ -99,7 +99,7 @@ def dongle_send_data(
     try:
         return dongle.exchange(hex_command)
     except CommException as err:
-        raise LedgerError.transalate_comm_exception(err)
+        raise LedgerError.transalate_comm_exception(err) from err
 
 
 def decode_response_version_from_config(confbytes: bytes) -> str:
@@ -138,7 +138,7 @@ def init_dongle(dongle: Any = None, debug: bool = False):
             try:
                 DONGLE_CACHE = getDongle(debug)
             except CommException as err:
-                raise LedgerError.transalate_comm_exception(err)
+                raise LedgerError.transalate_comm_exception(err) from err
 
         dong = DONGLE_CACHE
 
