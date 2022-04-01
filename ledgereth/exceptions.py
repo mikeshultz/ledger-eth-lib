@@ -84,7 +84,7 @@ class LedgerCancel(LedgerError):
 
 
 class LedgerInvalid(LedgerError):
-    message = 'Invalid date sent to ledger or "blind signing" is not enabled'
+    message = 'Invalid data sent to ledger or "blind signing" is not enabled'
 
 
 ERROR_CODE_EXCEPTIONS = {
