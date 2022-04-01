@@ -5,6 +5,7 @@ from ledgerblue.comm import getDongle
 from ledgerblue.commException import CommException
 
 from ledgereth.constants import DEFAULT_PATH_ENCODED
+from ledgereth.exceptions import LedgerError
 from ledgereth.objects import ISO7816Command
 
 DONGLE_CACHE = None
@@ -81,31 +82,13 @@ class LedgerCommands:
         return cmd.encode()
 
 
-def translate_exception(exp: Exception) -> Exception:
-    """Translate a CommException into something more useful to the user"""
-    string_err = str(exp)
-    if "No dongle found" in string_err:
-        return Exception("Ledger Nano not found")
-    elif "6804" in string_err:
-        return Exception("Ledger appears to be locked?")
-    elif any(x in string_err for x in ["6700", "6d00"]):
-        return Exception("Please open the Ethereum app on your Ledger device")
-    elif "6a80" in string_err:
-        return Exception(
-            "General failure: Invalid transaction, blind signing not allowed in settings, or"
-            " something else?"
-        )
-    else:
-        return exp
-
-
 def dongle_send(dongle, command_string: str) -> bytes:
     """Send a command to the dongle"""
     hex_command = LedgerCommands.get(command_string)
     try:
         return dongle.exchange(hex_command)
     except CommException as err:
-        raise translate_exception(err)
+        raise LedgerError.transalate_comm_exception(err) from err
 
 
 def dongle_send_data(
@@ -116,7 +99,7 @@ def dongle_send_data(
     try:
         return dongle.exchange(hex_command)
     except CommException as err:
-        raise translate_exception(err)
+        raise LedgerError.transalate_comm_exception(err) from err
 
 
 def decode_response_version_from_config(confbytes: bytes) -> str:
@@ -152,7 +135,11 @@ def init_dongle(dongle: Any = None, debug: bool = False):
     # If not given, use cache if available
     if dong is None:
         if DONGLE_CACHE is None:
-            DONGLE_CACHE = getDongle(debug)
+            try:
+                DONGLE_CACHE = getDongle(debug)
+            except CommException as err:
+                raise LedgerError.transalate_comm_exception(err) from err
+
         dong = DONGLE_CACHE
 
     # Sanity check the version

@@ -5,8 +5,10 @@ import pytest
 from eth_account.account import Account
 from eth_utils import decode_hex, encode_hex
 from ledgerblue.comm import getDongle
+from ledgerblue.commException import CommException
 
 from ledgereth.constants import DATA_CHUNK_SIZE
+from ledgereth.exceptions import LedgerError
 from ledgereth.transactions import TransactionType, decode_transaction
 from ledgereth.utils import decode_bip32_path
 
@@ -111,6 +113,19 @@ class MockDongle:
             raise ValueError(f"Unknown command {decode_hex(cmd)}")
 
 
+class MockExceptionDongle(MockDongle):
+    """MockDongle to cause errors"""
+
+    exception: CommException
+
+    def __init__(self, exception: CommException):
+        self._reset()
+        self.exception = exception
+
+    def exchange(self, adpu, timeout=20000):
+        raise self.exception
+
+
 def getMockDongle():
     return MockDongle()
 
@@ -118,11 +133,16 @@ def getMockDongle():
 @pytest.fixture
 def yield_dongle():
     @contextmanager
-    def yield_yield_dongle():
-        if USE_REAL_DONGLE:
+    def yield_yield_dongle(exception: LedgerError = None):
+        if exception is not None:
+            dongle = MockExceptionDongle(exception=exception)
+            yield dongle
+
+        elif USE_REAL_DONGLE:
             dongle = getDongle(True)
             yield dongle
             dongle.close()
+
         else:
             yield getMockDongle()
 
