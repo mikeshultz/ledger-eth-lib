@@ -1,6 +1,6 @@
 import binascii
 import struct
-from typing import Any, AnyStr, List, Optional, Tuple, Union
+from typing import Any, Union
 
 from ledgereth.comms import dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
