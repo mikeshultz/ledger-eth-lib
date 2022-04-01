@@ -560,3 +560,19 @@ class SignedType2Transaction(SerializableTransaction):
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
+
+
+class SignedMessage:
+    """Signed EIP-191 message"""
+
+    def __init__(
+        self,
+        message: bytes,
+        v: int,
+        r: int,
+        s: int,
+    ):
+        self.message = message
+        self.v = v
+        self.r = r
+        self.s = s

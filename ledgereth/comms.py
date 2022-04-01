@@ -60,6 +60,20 @@ class LedgerCommands:
         P2=b"\x00",
     )
 
+    SIGN_MESSAGE_FIRST_DATA = ISO7816Command(
+        CLA=b"\xe0",
+        INS=b"\x08",
+        P1=b"\x00",  # 0x00 - First TX data block | 0x80 - Secondary data block
+        P2=b"\x00",
+    )
+
+    SIGN_MESSAGE_SECONDARY_DATA = ISO7816Command(
+        CLA=b"\xe0",
+        INS=b"\x08",
+        P1=b"\x80",  # 0x00 - First TX data block | 0x80 - Secondary data block
+        P2=b"\x00",
+    )
+
     @staticmethod
     def get(name: str) -> bytes:
         if not hasattr(LedgerCommands, name):
