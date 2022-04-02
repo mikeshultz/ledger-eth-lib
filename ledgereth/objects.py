@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import IntEnum
-from typing import Any, Dict, List, NamedTuple, Tuple
+from typing import Any, Dict, List, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
 from rlp import Serializable, decode, encode
@@ -565,20 +565,45 @@ class SignedType2Transaction(SerializableTransaction):
     rawTransaction = property(raw_transaction)
 
 
-class SignedMessage(NamedTuple):
-    """Signed EIP-191 message"""
-
-    message: bytes
+class Signed(ABC):
     v: int
     r: int
     s: int
 
+    def __init__(self, v, r, s):
+        self.v = v
+        self.r = r
+        self.s = s
 
-class SignedTypedMessage(NamedTuple):
+    @property
+    def signature(self):
+        if not self.v or not self.r or not self.s:
+            raise ValueError("Missing v, r, or s")
+
+        return encode_hex(
+            self.r.to_bytes(32, "big")
+            + self.s.to_bytes(32, "big")
+            + self.v.to_bytes(1, "big")
+        )
+
+
+class SignedMessage(Signed):
+    """Signed EIP-191 message"""
+
+    message: bytes
+
+    def __init__(self, message, v, r, s):
+        self.message = message
+        super().__init__(v, r, s)
+
+
+class SignedTypedMessage(Signed):
     """Signed EIP-812 typed data"""
 
     domain_hash: bytes
     message_hash: bytes
-    v: int
-    r: int
-    s: int
+
+    def __init__(self, domain_hash, message_hash, v, r, s):
+        self.domain_hash = domain_hash
+        self.message_hash = message_hash
+        super().__init__(v, r, s)
