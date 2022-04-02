@@ -1,7 +1,8 @@
-from eth_utils import encode_hex
+from eth_utils import encode_hex, decode_hex
 from rlp import encode
 
 from ledgereth.accounts import find_account, get_accounts
+from ledgereth.messages import sign_message, sign_typed_data_draft
 from ledgereth.objects import SignedTransaction
 from ledgereth.transactions import create_transaction
 from ledgereth.utils import decode_web3_access_list
@@ -43,77 +44,107 @@ class LedgerSignerMiddleware:
 
     def __call__(self, method, params):
         if method == "eth_sendTransaction":
-            new_params = []
-
-            for tx_obj in params:
-                sender_address = tx_obj.get("from")
-                nonce = tx_obj.get("nonce")
-                gas = tx_obj.get("gas")
-                gas_price = tx_obj.get("gasPrice")
-                max_fee_per_gas = tx_obj.get("maxFeePerGas")
-                max_priority_fee_per_gas = tx_obj.get("maxPriorityFeePerGas")
-                value = tx_obj.get("value", "0x00")
-                access_list = None
-
-                if not sender_address:
-                    # TODO: Should this use a default?
-                    raise ValueError('"from" field not provided')
-
-                if not gas:
-                    # TODO: What's the default web3.py behavior for this?
-                    raise ValueError('"gas" field not provided')
-
-                if not gas_price and not max_fee_per_gas:
-                    raise ValueError('"gasPrice" or "maxFeePerGas" field not provided')
-
-                sender_account = find_account(sender_address, dongle=self._dongle)
-
-                if not sender_account:
-                    raise Exception(f"Account {sender_address} not found")
-
-                if nonce is None:
-                    nonce = self.w3.eth.get_transaction_count(sender_address)
-
-                if "accessList" in tx_obj:
-                    access_list = decode_web3_access_list(tx_obj["accessList"])
-
-                signed_tx = create_transaction(
-                    chain_id=self.w3.eth.chain_id,
-                    destination=tx_obj.get("to"),
-                    amount=int(value, 16),
-                    gas=int(gas, 16),
-                    gas_price=int(gas_price, 16) if gas_price else None,
-                    max_fee_per_gas=int(max_fee_per_gas, 16)
-                    if max_fee_per_gas
-                    else None,
-                    max_priority_fee_per_gas=int(max_priority_fee_per_gas, 16)
-                    if max_priority_fee_per_gas
-                    else None,
-                    nonce=nonce,
-                    data=tx_obj.get("data", b""),
-                    sender_path=sender_account.path,
-                    access_list=access_list,
-                    dongle=self._dongle,
-                )
-
-                new_params.append(signed_tx.rawTransaction)
-
-            # Change to raw tx call
-            method = "eth_sendRawTransaction"
-            params = new_params
+            return self._handle_eth_sendTransaction(method, params)
 
         elif method == "eth_accounts":
-            return {
-                # TODO: Can we get the request ID somehow?
-                "id": 1,
-                "jsonrpc": "2.0",
-                "result": list(
-                    map(lambda a: a.address, get_accounts(dongle=self._dongle))
-                ),
-            }
+            return self._handle_eth_accounts(method, params)
 
         elif method == "eth_sign":
-            raise NotImplementedError("Not yet implemented by LedgerSignerMiddleware")
+            return self._handle_eth_sign(method, params)
 
-        response = self.make_request(method, params)
-        return response
+        elif method == "eth_signTypedData":
+            return self._handle_eth_signTypedData(method, params)
+
+        # Send on to the next middleware(s)
+        return self.make_request(method, params)
+
+    def _handle_eth_accounts(self, method, params):
+        """Handler for eth_accounts RPC calls"""
+        return {
+            "result": list(map(lambda a: a.address, get_accounts(dongle=self._dongle))),
+        }
+
+    def _handle_eth_sendTransaction(self, method, params):
+        """Handler for eth_sendTransaction RPC calls"""
+        new_params = []
+
+        for tx_obj in params:
+            sender_address = tx_obj.get("from")
+            nonce = tx_obj.get("nonce")
+            gas = tx_obj.get("gas")
+            gas_price = tx_obj.get("gasPrice")
+            max_fee_per_gas = tx_obj.get("maxFeePerGas")
+            max_priority_fee_per_gas = tx_obj.get("maxPriorityFeePerGas")
+            value = tx_obj.get("value", "0x00")
+            access_list = None
+
+            if not sender_address:
+                # TODO: Should this use a default?
+                raise ValueError('"from" field not provided')
+
+            if not gas:
+                # TODO: What's the default web3.py behavior for this?
+                raise ValueError('"gas" field not provided')
+
+            if not gas_price and not max_fee_per_gas:
+                raise ValueError('"gasPrice" or "maxFeePerGas" field not provided')
+
+            sender_account = find_account(sender_address, dongle=self._dongle)
+
+            if not sender_account:
+                raise Exception(f"Account {sender_address} not found")
+
+            if nonce is None:
+                nonce = self.w3.eth.get_transaction_count(sender_address)
+
+            if "accessList" in tx_obj:
+                access_list = decode_web3_access_list(tx_obj["accessList"])
+
+            signed_tx = create_transaction(
+                chain_id=self.w3.eth.chain_id,
+                destination=tx_obj.get("to"),
+                amount=int(value, 16),
+                gas=int(gas, 16),
+                gas_price=int(gas_price, 16) if gas_price else None,
+                max_fee_per_gas=int(max_fee_per_gas, 16) if max_fee_per_gas else None,
+                max_priority_fee_per_gas=int(max_priority_fee_per_gas, 16)
+                if max_priority_fee_per_gas
+                else None,
+                nonce=nonce,
+                data=tx_obj.get("data", b""),
+                sender_path=sender_account.path,
+                access_list=access_list,
+                dongle=self._dongle,
+            )
+
+            new_params.append(signed_tx.rawTransaction)
+
+        # Change to raw tx call
+        method = "eth_sendRawTransaction"
+        params = new_params
+
+        return self.make_request(method, params)
+
+    def _handle_eth_sign(self, mehtod, params):
+        """Handler for eth_sign RPC calls"""
+        if len(params) != 2:
+            raise ValueError("Unexpected RPC request params length for eth_sign")
+
+        account = params[0]
+        message = decode_hex(params[1])
+
+        signer_account = find_account(account, dongle=self._dongle)
+        signed = sign_message(message, signer_account.path, dongle=self._dongle)
+        result = (
+            signed.r.to_bytes(32, "big")
+            + signed.s.to_bytes(32, "big")
+            + signed.v.to_bytes(1, "big")
+        )
+
+        return {
+            "result": encode_hex(result),
+        }
+
+    def _handle_eth_signTypedData(self, mehtod, params):
+        """Handler for eth_signTypedData RPC calls"""
+        raise NotImplementedError("Not yet implemented by LedgerSignerMiddleware")
