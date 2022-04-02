@@ -3,7 +3,9 @@ from contextlib import contextmanager
 
 import pytest
 from eth_account.account import Account
+from eth_account.messages import SignableMessage, encode_defunct, encode_structured_data
 from eth_utils import decode_hex, encode_hex
+from hexbytes import HexBytes
 from ledgerblue.comm import getDongle
 from ledgerblue.commException import CommException
 
@@ -42,6 +44,39 @@ class MockDongle:
         """Sign transaction data sent to the Ledger"""
         tx = decode_transaction(encoded_tx)
         resp = self.account.sign_transaction(tx.to_rpc_dict())
+
+        v = resp.v.to_bytes(1, "big")
+        r = resp.r.to_bytes(32, "big")
+        s = resp.s.to_bytes(32, "big")
+
+        # Reset the stack and account MockLegder working with
+        self._reset()
+
+        return bytearray(v + r + s)
+
+    def _sign_message(self, encoded):
+        """Sign message accodign to EIP-191"""
+        signable = encode_defunct(encoded)
+        resp = self.account.sign_message(signable)
+
+        v = resp.v.to_bytes(1, "big")
+        r = resp.r.to_bytes(32, "big")
+        s = resp.s.to_bytes(32, "big")
+
+        # Reset the stack and account MockLegder working with
+        self._reset()
+
+        return bytearray(v + r + s)
+
+    def _sign_typed(self, domain_hash, message_hash):
+        """Sign message accodign to EIP-191"""
+        signable = SignableMessage(
+            HexBytes(b"\x01"),
+            domain_hash,
+            message_hash,
+        )
+
+        resp = self.account.sign_message(signable)
 
         v = resp.v.to_bytes(1, "big")
         r = resp.r.to_bytes(32, "big")
@@ -96,6 +131,43 @@ class MockDongle:
             encoded_tx = b"".join(self.stack)
             return self._sign_transaction(encoded_tx)
 
+    def handle_message_first_data(self, lc, data):
+        path_length = data[0] * 4
+        path_end = path_length + 1
+        encoded_path = data[1:path_end]
+        self.account = get_account_by_path(encoded_path)
+
+        # Message is preceeded by length in 4-byte chunk
+        # message_length = struct.unpack(">I", data[path_end : path_end + 4])
+
+        # Push this message data onto the stack
+        self.stack.append(data[path_end + 4 :])
+
+        if len(data) < DATA_CHUNK_SIZE:
+            encoded = b"".join(self.stack)
+            return self._sign_message(encoded)
+
+    def handle_message_secondary_data(self, lc, data):
+        # Push this message data onto the stack
+        self.stack.append(data[:lc])
+
+        if len(data) < DATA_CHUNK_SIZE:
+            encoded = b"".join(self.stack)
+            return self._sign_message(encoded)
+
+    def handle_sign_typed(self, lc, data):
+        path_length = data[0] * 4
+        path_end = path_length + 1
+        encoded_path = data[1:path_end]
+        self.account = get_account_by_path(encoded_path)
+
+        # Push this message data onto the stack
+        payload = data[path_end:]
+        domain_hash = payload[:32]
+        message_hash = payload[32:]
+
+        return self._sign_typed(domain_hash, message_hash)
+
     def exchange(self, apdu, timeout=20000):
         cmd = apdu[:4]
         lc = apdu[4]
@@ -109,6 +181,12 @@ class MockDongle:
             return self.handle_tx_first_data(lc, data)
         elif cmd == b"\xe0\x04\x80\x00":
             return self.handle_tx_secondary_data(lc, data)
+        elif cmd == b"\xe0\x08\x00\x00":
+            return self.handle_message_first_data(lc, data)
+        elif cmd == b"\xe0\x08\x80\x00":
+            return self.handle_message_secondary_data(lc, data)
+        elif cmd == b"\xe0\x0c\x00\x00":
+            return self.handle_sign_typed(lc, data)
         else:
             raise ValueError(f"Unknown command {decode_hex(cmd)}")
 
@@ -124,6 +202,9 @@ class MockExceptionDongle(MockDongle):
 
     def exchange(self, adpu, timeout=20000):
         raise self.exception
+
+    def close(self):
+        ...
 
 
 def getMockDongle():
