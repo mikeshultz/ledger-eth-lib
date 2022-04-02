@@ -6,9 +6,9 @@ Notes
 - Some of the following imports utilize web3.py deps that are not deps of
     ledgereth.
 """
-import json
+
 from eth_account.messages import encode_structured_data
-from eth_utils import encode_hex, decode_hex
+from eth_utils import decode_hex, encode_hex
 from rlp import encode
 
 from ledgereth.accounts import find_account, get_accounts

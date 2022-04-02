@@ -8,7 +8,7 @@ from eth_utils import decode_hex
 from ledgereth.accounts import get_accounts
 from ledgereth.messages import sign_message, sign_typed_data_draft
 
-from .fixtures import large_message, eip712_dict
+from .fixtures import eip712_dict, large_message
 
 
 def test_sign_message(yield_dongle):
