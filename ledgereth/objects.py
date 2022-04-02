@@ -132,6 +132,9 @@ class LedgerAccount:
         self.path_encoded = parse_bip32_path(path)
         self.address = to_checksum_address(address)
 
+    def __repr__(self):
+        return f"<ledgereth.objects.LedgerAccount {self.address}>"
+
 
 class SerializableTransaction(Serializable):
     @classmethod
