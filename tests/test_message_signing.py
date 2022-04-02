@@ -1,5 +1,5 @@
 """
-Test higher level transaction functionality
+Test higher level message signing functionality
 """
 from eth_account import Account
 from eth_account.messages import encode_defunct, encode_structured_data

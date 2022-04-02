@@ -74,7 +74,7 @@ class LedgerCommands:
         P2=b"\x00",
     )
 
-    SIGN_TYPED_FIRST_DATA = ISO7816Command(
+    SIGN_TYPED_DATA = ISO7816Command(
         CLA=b"\xe0",
         INS=b"\x0c",
         P1=b"\x00",

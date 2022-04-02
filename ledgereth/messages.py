@@ -70,7 +70,7 @@ def sign_message(
 
     signed = SignedMessage(message, v, r, s)
 
-    # If this func inited the dongle, it close it, otherwise core dump
+    # If this func inited the dongle, then close it, otherwise core dump
     if not given_dongle:
         dongle.close()
 
@@ -112,7 +112,7 @@ def sign_typed_data_draft(
 
     retval = dongle_send_data(
         dongle,
-        "SIGN_TYPED_FIRST_DATA",
+        "SIGN_TYPED_DATA",
         payload,
         Lc=len(payload).to_bytes(1, "big"),
     )
@@ -126,7 +126,7 @@ def sign_typed_data_draft(
 
     signed = SignedTypedMessage(domain_hash, message_hash, v, r, s)
 
-    # If this func inited the dongle, it close it, otherwise core dump
+    # If this func inited the dongle, then close it, otherwise core dump
     if not given_dongle:
         dongle.close()
 

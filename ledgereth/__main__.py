@@ -196,15 +196,16 @@ def send_value(dongle, args):
         chain_id=args.chainid,
         sender_path=account.path,
     )
+
     print(f"Signed Raw Transaction: {signed.raw_transaction()}")
 
 
 def sign_text_message(dongle, args):
-    print("args:", args)
     print(f'Signing "{args.message}" with {args.account_address}')
 
     account = find_account(args.account_address, dongle)
     signed = sign_message(args.message, account.path)
+
     print(f"Signature: {signed.signature}")
 
 
