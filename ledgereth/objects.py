@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from enum import IntEnum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, NamedTuple, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
 from rlp import Serializable, decode, encode
@@ -562,35 +562,20 @@ class SignedType2Transaction(SerializableTransaction):
     rawTransaction = property(raw_transaction)
 
 
-class SignedMessage:
+class SignedMessage(NamedTuple):
     """Signed EIP-191 message"""
 
-    def __init__(
-        self,
-        message: bytes,
-        v: int,
-        r: int,
-        s: int,
-    ):
-        self.message = message
-        self.v = v
-        self.r = r
-        self.s = s
+    message: bytes
+    v: int
+    r: int
+    s: int
 
 
-class SignedTypedMessage:
+class SignedTypedMessage(NamedTuple):
     """Signed EIP-812 typed data"""
 
-    def __init__(
-        self,
-        domain_hash: bytes,
-        message_hash: bytes,
-        v: int,
-        r: int,
-        s: int,
-    ):
-        self.domain_hash = domain_hash
-        self.message_hash = message_hash
-        self.v = v
-        self.r = r
-        self.s = s
+    domain_hash: bytes
+    message_hash: bytes
+    v: int
+    r: int
+    s: int
