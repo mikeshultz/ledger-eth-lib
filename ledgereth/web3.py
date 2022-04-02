@@ -47,10 +47,11 @@ https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 
 
 class LedgerSignerMiddleware:
+    _dongle = None
+
     def __init__(self, make_request, w3):
         self.w3 = w3
         self.make_request = make_request
-        self.dongle = None
 
     def __call__(self, method, params):
         if method == "eth_sendTransaction":
