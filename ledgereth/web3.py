@@ -145,14 +145,9 @@ class LedgerSignerMiddleware:
 
         signer_account = find_account(account, dongle=self._dongle)
         signed = sign_message(message, signer_account.path, dongle=self._dongle)
-        result = (
-            signed.r.to_bytes(32, "big")
-            + signed.s.to_bytes(32, "big")
-            + signed.v.to_bytes(1, "big")
-        )
 
         return {
-            "result": encode_hex(result),
+            "result": signed.signature,
         }
 
     def _handle_eth_signTypedData(self, mehtod, params):
@@ -178,12 +173,7 @@ class LedgerSignerMiddleware:
         signed = sign_typed_data_draft(
             domain_hash, message_hash, signer_account.path, dongle=self._dongle
         )
-        result = (
-            signed.r.to_bytes(32, "big")
-            + signed.s.to_bytes(32, "big")
-            + signed.v.to_bytes(1, "big")
-        )
 
         return {
-            "result": encode_hex(result),
+            "result": signed.signature,
         }

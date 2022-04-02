@@ -2,11 +2,15 @@ import argparse
 import sys
 from enum import IntEnum
 
+from eth_utils import decode_hex, encode_hex
+
 from ledgereth import (
     create_transaction,
     find_account,
     get_account_by_path,
     get_accounts,
+    sign_message,
+    sign_typed_data_draft,
 )
 from ledgereth.comms import init_dongle
 
@@ -115,6 +119,41 @@ def get_args(argv):
         help="The hex data to send with the tx (default: empty)",
     )
 
+    # `sign` command
+    sign_parser = subparsers.add_parser(
+        "sign", help="Sign a text message with a Ledger account using EIP-191 v0"
+    )
+    sign_parser.add_argument(
+        "account_address",
+        metavar="ADDRESS",
+        help="Address of the account to sign with",
+    )
+    sign_parser.add_argument(
+        "message",
+        metavar="MESSAGE",
+        help="Message to sign",
+    )
+
+    # `signtyped` command
+    signtyped_parser = subparsers.add_parser(
+        "signtyped", help="Sign a text message with a Ledger account using EIP-191 v0"
+    )
+    signtyped_parser.add_argument(
+        "account_address",
+        metavar="ADDRESS",
+        help="Address of the account to sign with",
+    )
+    signtyped_parser.add_argument(
+        "domain_hash",
+        metavar="DOMAIN",
+        help="Domain hash to sign",
+    )
+    signtyped_parser.add_argument(
+        "message_hash",
+        metavar="MESSAGE",
+        help="Message hash to sign",
+    )
+
     return parser.parse_args(argv)
 
 
@@ -160,9 +199,33 @@ def send_value(dongle, args):
     print(f"Signed Raw Transaction: {signed.raw_transaction()}")
 
 
+def sign_text_message(dongle, args):
+    print("args:", args)
+    print(f'Signing "{args.message}" with {args.account_address}')
+
+    account = find_account(args.account_address, dongle)
+    signed = sign_message(args.message, account.path)
+    print(f"Signature: {signed.signature}")
+
+
+def sign_typed_data(dongle, args):
+    print(f"Signing typed data with account {args.account_address}")
+    print(f"Domain hash: {args.domain_hash}")
+    print(f"Message hash: {args.message_hash}")
+
+    account = find_account(args.account_address, dongle)
+    signed = sign_typed_data_draft(
+        decode_hex(args.domain_hash), decode_hex(args.message_hash), account.path
+    )
+
+    print(f"Signature: {signed.signature}")
+
+
 COMMANDS = {
     "accounts": print_accounts,
     "send": send_value,
+    "sign": sign_text_message,
+    "signtyped": sign_typed_data,
 }
 
 

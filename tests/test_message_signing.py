@@ -3,7 +3,7 @@ Test higher level transaction functionality
 """
 from eth_account import Account
 from eth_account.messages import encode_defunct, encode_structured_data
-from eth_utils import decode_hex
+from eth_utils import decode_hex, encode_hex
 
 from ledgereth.accounts import get_accounts
 from ledgereth.messages import sign_message, sign_typed_data_draft
