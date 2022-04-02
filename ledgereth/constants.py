@@ -16,7 +16,7 @@ def getenvint(key, default=0):
 DEFAULT_CHAIN_ID = 1
 
 # Default accounts to fetch with get_accounts
-DEFAULT_ACCOUNTS_FETCH = 1
+DEFAULT_ACCOUNTS_FETCH = 3
 
 # Number of accounts to fetch when looking up an account by address
 MAX_ACCOUNTS_FETCH = getenvint("MAX_ACCOUNTS_FETCH", 5)
