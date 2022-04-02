@@ -105,9 +105,3 @@ Sign a simple text message using the EIP-191 v0 standard:
     >>> signed = sign_message("I'm a little teapot")
     >>> signed.signature
     '0x7a26c1f3eab57a600f200c9e1bbc9014f738c1b6467e241e6a50af800d9e0e1d5d973ae1c72fc2cf393685c8bf4c40ad3000604f4ce1803375025b1901cd745c1c'
-
-## TODO
-
-- Fill out tests
-- Add messaging signing support
-- Add ERC-712 messaging signing support
