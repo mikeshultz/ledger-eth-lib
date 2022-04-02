@@ -576,3 +576,21 @@ class SignedMessage:
         self.v = v
         self.r = r
         self.s = s
+
+
+class SignedTypedMessage:
+    """Signed EIP-812 typed data"""
+
+    def __init__(
+        self,
+        domain_hash: bytes,
+        message_hash: bytes,
+        v: int,
+        r: int,
+        s: int,
+    ):
+        self.domain_hash = domain_hash
+        self.message_hash = message_hash
+        self.v = v
+        self.r = r
+        self.s = s
