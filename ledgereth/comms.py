@@ -1,15 +1,15 @@
-from typing import Any
 
 from eth_utils import add_0x_prefix
 from ledgerblue.comm import getDongle
 from ledgerblue.commException import CommException
+from ledgerblue.Dongle import Dongle
 
 from ledgereth.constants import DEFAULT_PATH_ENCODED
 from ledgereth.exceptions import LedgerError
 from ledgereth.objects import ISO7816Command
 
-DONGLE_CACHE = None
-DONGLE_CONFIG_CACHE = None
+DONGLE_CACHE: Dongle
+DONGLE_CONFIG_CACHE: bytes
 
 
 class LedgerCommands:
@@ -103,7 +103,7 @@ class LedgerCommands:
         return cmd.encode()
 
 
-def dongle_send(dongle, command_string: str) -> bytes:
+def dongle_send(dongle: Dongle, command_string: str) -> bytes:
     """Send a command to the dongle"""
     hex_command = LedgerCommands.get(command_string)
     try:
@@ -113,7 +113,7 @@ def dongle_send(dongle, command_string: str) -> bytes:
 
 
 def dongle_send_data(
-    dongle, command_string: str, data: bytes, Lc: bytes = None, Le: bytes = None
+    dongle: Dongle, command_string: str, data: bytes, Lc: bytes = None, Le: bytes = None
 ) -> bytes:
     """Send a command with data to the dongle"""
     hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)
@@ -148,26 +148,22 @@ def is_usable_version(confbytes: bytes) -> bool:
     return ver[0] == 9 or not any([ver[0] != 1, ver[1] < 2, ver[2] < 4])
 
 
-def init_dongle(dongle: Any = None, debug: bool = False):
+def init_dongle(dongle: Dongle = None, debug: bool = False) -> Dongle:
     """Initialize the dongle and sanity check the connection"""
     global DONGLE_CACHE, DONGLE_CONFIG_CACHE
-    dong = dongle
 
     # If not given, use cache if available
-    if dong is None:
-        if DONGLE_CACHE is None:
-            try:
-                DONGLE_CACHE = getDongle(debug)
-            except CommException as err:
-                raise LedgerError.transalate_comm_exception(err) from err
+    if dongle is None and DONGLE_CACHE is None:
+        try:
+            DONGLE_CACHE = getDongle(debug)
+        except CommException as err:
+            raise LedgerError.transalate_comm_exception(err) from err
 
-        dong = DONGLE_CACHE
+        # Sanity check the version
+        if DONGLE_CONFIG_CACHE is None or dongle is not None:
+            DONGLE_CONFIG_CACHE = dongle_send(DONGLE_CACHE, "GET_CONFIGURATION")
 
-    # Sanity check the version
-    if DONGLE_CONFIG_CACHE is None or dongle is not None:
-        DONGLE_CONFIG_CACHE = dongle_send(dong, "GET_CONFIGURATION")
+        if not is_usable_version(DONGLE_CONFIG_CACHE):
+            raise NotImplementedError("Unsupported firmware version")
 
-    if not is_usable_version(DONGLE_CONFIG_CACHE):
-        raise NotImplementedError("Unsupported firmware version")
-
-    return dong
+    return dongle or DONGLE_CACHE

@@ -1,10 +1,10 @@
 import binascii
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from eth_utils import decode_hex
 from rlp import Serializable, decode, encode
 
-from ledgereth.comms import dongle_send_data, init_dongle
+from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
 from ledgereth.objects import (
     SerializableTransaction,
@@ -30,7 +30,7 @@ Text = Union[str, bytes]
 def sign_transaction(
     tx: Serializable,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedTransaction:
     """Sign a transaction object (rlp.Serializable)"""
     given_dongle = dongle is not None
@@ -151,19 +151,23 @@ def create_transaction(
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
     access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from indiv args"""
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
 
-    if is_hex_string(destination):
+    if type(destination) == str and is_hex_string(destination):
         destination = decode_hex(destination)
 
     if not data:
         data = b""
-    elif is_hex_string(data):
+    elif type(data) == str and is_hex_string(data):
         data = decode_hex(data)
+
+    # be cool mypy
+    assert type(destination) == bytes
+    assert type(data) == bytes
 
     # EIP-1559 transactions should never have gas_price
     if gas_price and (max_priority_fee_per_gas or max_fee_per_gas):

@@ -1,8 +1,8 @@
 import binascii
 import struct
-from typing import Any, Union
+from typing import Optional, Union
 
-from ledgereth.comms import dongle_send_data, init_dongle
+from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
 from ledgereth.objects import SignedMessage, SignedTypedMessage
 from ledgereth.utils import (
@@ -19,7 +19,7 @@ AnyText = Union[str, bytes]
 def sign_message(
     message: AnyText,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedMessage:
     """Sign a transaction object (rlp.Serializable)"""
     given_dongle = dongle is not None
@@ -81,7 +81,7 @@ def sign_typed_data_draft(
     domain_hash: AnyText,
     message_hash: AnyText,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedTypedMessage:
     """Sign typed data.
 

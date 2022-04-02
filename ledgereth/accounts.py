@@ -1,8 +1,13 @@
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from eth_utils import to_checksum_address
 
-from ledgereth.comms import decode_response_address, dongle_send_data, init_dongle
+from ledgereth.comms import (
+    Dongle,
+    decode_response_address,
+    dongle_send_data,
+    init_dongle,
+)
 from ledgereth.constants import (
     DEFAULT_ACCOUNTS_FETCH,
     LEGACY_ACCOUNTS,
@@ -12,7 +17,9 @@ from ledgereth.objects import LedgerAccount
 from ledgereth.utils import parse_bip32_path
 
 
-def get_account_by_path(path_string: str, dongle: Any = None) -> LedgerAccount:
+def get_account_by_path(
+    path_string: str, dongle: Optional[Dongle] = None
+) -> LedgerAccount:
     """Return an account for a specific BIP32 derivation path"""
     dongle = init_dongle(dongle)
     path = parse_bip32_path(path_string)
@@ -23,7 +30,7 @@ def get_account_by_path(path_string: str, dongle: Any = None) -> LedgerAccount:
 
 
 def get_accounts(
-    dongle: Any = None, count: int = DEFAULT_ACCOUNTS_FETCH
+    dongle: Optional[Dongle] = None, count: int = DEFAULT_ACCOUNTS_FETCH
 ) -> List[LedgerAccount]:
     """Return available accounts"""
     accounts = []
@@ -41,7 +48,7 @@ def get_accounts(
 
 
 def find_account(
-    address: str, dongle: Any = None, count: int = MAX_ACCOUNTS_FETCH
+    address: str, dongle: Optional[Dongle] = None, count: int = MAX_ACCOUNTS_FETCH
 ) -> Optional[LedgerAccount]:
     """Find an account by address"""
 
