@@ -1,3 +1,13 @@
+"""
+Web3.py middlware that leverages ledgereth for signing functionarliy.
+
+Notes
+-----
+- Some of the following imports utilize web3.py deps that are not deps of
+    ledgereth.
+"""
+import json
+from eth_account.messages import encode_structured_data
 from eth_utils import encode_hex, decode_hex
 from rlp import encode
 
@@ -147,4 +157,33 @@ class LedgerSignerMiddleware:
 
     def _handle_eth_signTypedData(self, mehtod, params):
         """Handler for eth_signTypedData RPC calls"""
-        raise NotImplementedError("Not yet implemented by LedgerSignerMiddleware")
+        if len(params) != 2:
+            raise ValueError("Unexpected RPC request params length for eth_sign")
+
+        account = params[0]
+        typed_data = params[1]
+
+        if type(typed_data) != dict:
+            raise TypeError(
+                "Expected type data to be a dictionary for second param for eth_signTypedData call"
+            )
+
+        # Use eth_account to encode and hash the typed data
+        signable = encode_structured_data(typed_data)
+        domain_hash = signable.header
+        message_hash = signable.body
+
+        # Find the account and sign with Ledger
+        signer_account = find_account(account, dongle=self._dongle)
+        signed = sign_typed_data_draft(
+            domain_hash, message_hash, signer_account.path, dongle=self._dongle
+        )
+        result = (
+            signed.r.to_bytes(32, "big")
+            + signed.s.to_bytes(32, "big")
+            + signed.v.to_bytes(1, "big")
+        )
+
+        return {
+            "result": encode_hex(result),
+        }
