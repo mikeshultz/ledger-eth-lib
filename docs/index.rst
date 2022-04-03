@@ -30,6 +30,7 @@ require some installed dependencies.  For full installation instructions, see
    accounts
    transaction_signing
    message_signing
+   web3
 
 
 ==================

@@ -208,7 +208,8 @@ todo_include_todos = True
 
 def skip(app, what, name, obj, would_skip, options):
     if name == "__init__":
-        return False
+        # Want users to not touch this specific __init__
+        return obj.__class__.__name__ != "LedgerSignerMiddleware"
     return would_skip
 
 
