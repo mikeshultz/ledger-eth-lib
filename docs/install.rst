@@ -14,29 +14,71 @@ Some system level depenencies may be required for `ledgereth` to communicate wit
 Linux
 =====
 
+-------------------
+Common Connectivity
+-------------------
+
+.. note::
+
+    You can skip this part if you already have Ledger Live working, or some other way of communicating with your Ledger on your system.
+
+Common for every distro, is that you'll need to create some udev rules to grant your user permissions to access your Ledger device.  You will need the vendor and product ID.  You can get them like this:
+
+.. code:: bash
+
+    $ lsusb | grep Ledger
+    Bus 001 Device 010: ID 2c97:1015 Ledger Nano S
+
+Right before the device name you'll see the product and vendor ID (in this case, ``2c97:1015``).  Then you should create a file like `/etc/udev/rules.d/20-hw1.rules` and add a specific rule like this:
+
+.. code::
+
+    SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="1015", MODE="0660", TAG+="uaccess", TAG+="udev-acl" OWNER="<UNIX username>"
+
+Then either reboot or trigger udev to reload the rules like this:
+
+.. code:: bash
+
+    $ udevadm control --reload-rules
+    $ udevadm trigger
+
+Ledger also created a `useful script and rules file`_ that you can use.  For more information, see the `Ledger support site for connectivity issues`_.
+
+.. _`useful script and rules file`: https://github.com/LedgerHQ/udev-rules
+.. _`Ledger support site for connectivity issues`: https://support.ledger.com/hc/en-us/articles/115005165269-Connection-issues-with-Windows-or-Linux?support=true
+
+NOTE: Is cython a dep on every system? - what depends on this?
+
 ------
 Ubuntu
 ------
 
-.. code-block:: bash
+Ubuntu is just about good out of the box, the only thing you'll might want to install is pip and virtualenv tools.
 
-    apt install TBD
+.. code:: bash
+
+    $ apt install python3-venv python3-pip 
+
+The ``python3-venv`` package is optional but it's generally a good idea.  Your call.
 
 ----------
 Arch Linux
 ----------
 
-.. code-block:: bash
+.. code:: bash
 
-    pacman -S TBD
+    $ pacman -S base-devel python
 
 -----------
 REHL/CentOS
 -----------
 
-.. code-block:: bash
+The group "Development Tools" and package `python3-devel` must be installed to be able to compile some of the dependencies. 
 
-    yum install TBD
+.. code:: bash
+
+    $ dnf groupinstall "Development Tools"
+    $ dnf install python3-devel
 
 -------
 Windows
@@ -57,14 +99,14 @@ Installing ledgereth
 
 Install it with system python:
 
-.. code-block:: bash
+.. code:: bash
 
-    pip install --user ledgereth
+    $ pip install --user ledgereth
 
 Or, with a virtual environment:
 
-.. code-block:: bash
+.. code:: bash
 
-    python -m venv ~/virtualenvs/ledgereth
-    source ~/virtualenvs/ledgereth/bin/activate
-    pip install ledgereth
+    $ python -m venv ~/virtualenvs/ledgereth
+    $ source ~/virtualenvs/ledgereth/bin/activate
+    $ pip install ledgereth

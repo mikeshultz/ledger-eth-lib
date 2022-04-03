@@ -36,6 +36,10 @@ Sign a Message
 Sign Typed Data
 ***************
 
+This command, similar to the library, only takes hashes of the domain and message.  That's because the Ledger Ethereum app itself only deals with these hashes rather than the data/message iteself.  For more details on how you might generate these hashes, see the `typed data signing implementation in the tests`_.
+
 .. code-block:: bash
 
     python -m ledgereth signtyped SIGNER_ADDRESS DOMAIN_HASH MESSAGE_HASH
+
+.. _`typed data signing implementation in the tests`: https://github.com/mikeshultz/ledger-eth-lib/blob/fce09508ab8d37a59c18617c68edc00cdcbb1261/tests/test_message_signing.py#L55-L74

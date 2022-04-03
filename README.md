@@ -18,7 +18,7 @@ Please see [the ledgereth documentation](https://ledgereth.readthedocs.io/) for 
 
 ### Ledger Devices
 
-This lib has been tested to work on Ledger Nano S and Nano X.  Will probalby work with Ledger Blue and any devices the [`ledgerblue` library](https://github.com/LedgerHQ/blue-loader-python) and [ledger-app-eth](https://github.com/LedgerHQ/ledger-app-eth) supports.
+This lib has been tested to work on Ledger Nano S and Nano X.  It will probalby work with Ledger Blue and any devices the [`ledgerblue` library](https://github.com/LedgerHQ/blue-loader-python) and [ledger-app-eth](https://github.com/LedgerHQ/ledger-app-eth) supports.
 
 ### Ledger Account Derivations
 
