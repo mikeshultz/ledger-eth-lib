@@ -20,7 +20,15 @@ from ledgereth.utils import parse_bip32_path
 def get_account_by_path(
     path_string: str, dongle: Optional[Dongle] = None
 ) -> LedgerAccount:
-    """Return an account for a specific BIP32 derivation path"""
+    """Return an account for a specific BIP32 derivation path
+
+    :param path_string: (:code:`str`) - HID derivation path for the account to
+        sign with.
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
+        use to communicate with the Ledger device
+    :return: :class:`ledgereth.objects.LedgerAccount` instance for the given
+        account
+    """
     dongle = init_dongle(dongle)
     path = parse_bip32_path(path_string)
     lc = len(path).to_bytes(1, "big")
@@ -32,7 +40,14 @@ def get_account_by_path(
 def get_accounts(
     dongle: Optional[Dongle] = None, count: int = DEFAULT_ACCOUNTS_FETCH
 ) -> List[LedgerAccount]:
-    """Return available accounts"""
+    """Return available accounts
+
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
+        use to communicate with the Ledger device
+    :param count: (:code:`int`) - Amount of accounts to return
+    :return: list of :class:`ledgereth.objects.LedgerAccount` instances found on
+        the ledger
+    """
     accounts = []
     dongle = init_dongle(dongle)
 
@@ -50,7 +65,15 @@ def get_accounts(
 def find_account(
     address: str, dongle: Optional[Dongle] = None, count: int = MAX_ACCOUNTS_FETCH
 ) -> Optional[LedgerAccount]:
-    """Find an account by address"""
+    """Find an account by address
+
+    :param address: (:class:`str`) - An address to look up
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) - The Dongle instance to
+        use to communicate with the Ledger device
+    :param count: (:code:`int`) - How deep in the derivation sequence to look
+    :return: :class:`ledgereth.objects.LedgerAccount` instance if found on the
+        Ledger
+    """
 
     address = to_checksum_address(address)
 

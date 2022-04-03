@@ -63,6 +63,7 @@ setup(
     install_requires=requirements_to_list("requirements.txt"),
     extras_require={
         "dev": requirements_to_list("requirements.dev.txt"),
+        "docs": requirements_to_list("requirements.docs.txt"),
     },
     package_data={
         "": [
