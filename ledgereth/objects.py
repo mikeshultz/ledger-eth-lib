@@ -264,8 +264,9 @@ class Type1Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[int]]] = list(),
+        access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
     ):
+        access_list = access_list or []
         super().__init__(
             chain_id,
             nonce,
