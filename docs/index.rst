@@ -12,7 +12,6 @@ Here's the quickest way to get started.
 
 .. code-block:: bash
 
-    #!/bin/sh
     pip install ledgereth
 
 You may want to setup a `Python virtual environment`_ and your system may
