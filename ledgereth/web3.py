@@ -43,6 +43,13 @@ class LedgerSignerMiddleware:
     """Web3.py middleware.  It will automatically intercept the relevant
     JSON-RPC calls and respond with data from your Ledger device.
 
+    :Intercepted JSON-RPC methods:
+
+    - ``eth_sendTransaction`` (``web3.eth.send_transaction()``)
+    - ``eth_accounts`` (``web3.eth.accounts``)
+    - ``eth_sign`` (``web3.eth.sign()``)
+    - ``eth_signTypedData``  (``web3.eth.sign_typed_data()``)
+
     :Example:
 
     .. code:: python
