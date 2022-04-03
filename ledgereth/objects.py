@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import Any, Dict, List, Tuple, Optional
 
@@ -131,6 +131,9 @@ class LedgerAccount:
         self.path = path
         self.path_encoded = parse_bip32_path(path)
         self.address = to_checksum_address(address)
+
+    def __repr__(self):
+        return f"<ledgereth.objects.LedgerAccount {self.address}>"
 
 
 class SerializableTransaction(Serializable):
@@ -561,3 +564,47 @@ class SignedType2Transaction(SerializableTransaction):
 
     # Match the API of the web3.py Transaction object
     rawTransaction = property(raw_transaction)
+
+
+class Signed(ABC):
+    v: int
+    r: int
+    s: int
+
+    def __init__(self, v, r, s):
+        self.v = v
+        self.r = r
+        self.s = s
+
+    @property
+    def signature(self):
+        if not self.v or not self.r or not self.s:
+            raise ValueError("Missing v, r, or s")
+
+        return encode_hex(
+            self.r.to_bytes(32, "big")
+            + self.s.to_bytes(32, "big")
+            + self.v.to_bytes(1, "big")
+        )
+
+
+class SignedMessage(Signed):
+    """Signed EIP-191 message"""
+
+    message: bytes
+
+    def __init__(self, message, v, r, s):
+        self.message = message
+        super().__init__(v, r, s)
+
+
+class SignedTypedMessage(Signed):
+    """Signed EIP-812 typed data"""
+
+    domain_hash: bytes
+    message_hash: bytes
+
+    def __init__(self, domain_hash, message_hash, v, r, s):
+        self.domain_hash = domain_hash
+        self.message_hash = message_hash
+        super().__init__(v, r, s)

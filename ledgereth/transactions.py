@@ -132,7 +132,7 @@ def sign_transaction(
                 sender_s=s,
             )
 
-    # If this func inited the dongle, it close it, otherwise core dump
+    # If this func inited the dongle, then close it, otherwise core dump
     if not given_dongle:
         dongle.close()
 
@@ -212,7 +212,7 @@ def create_transaction(
 
     signed = sign_transaction(tx, sender_path, dongle=dongle)
 
-    # If this func inited the dongle, it close it, otherwise core dump
+    # If this func inited the dongle, then close it, otherwise core dump
     if not given_dongle:
         dongle.close()
 
