@@ -1,4 +1,4 @@
-# ledger-eth-lib
+# ledgereth
 
 [![Documentation Status](https://readthedocs.org/projects/ledgereth/badge/?version=latest)](https://ledgereth.readthedocs.io/en/latest/?badge=latest)
 
