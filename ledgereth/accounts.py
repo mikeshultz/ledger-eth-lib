@@ -20,7 +20,7 @@ from ledgereth.utils import parse_bip32_path
 def get_account_by_path(
     path_string: str, dongle: Optional[Dongle] = None
 ) -> LedgerAccount:
-    """Return an account for a specific BIP32 derivation path
+    """Return an account for a specific BIP-44 derivation path
 
     :param path_string: (:code:`str`) - HID derivation path for the account to
         sign with.
