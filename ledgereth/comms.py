@@ -1,4 +1,3 @@
-
 from eth_utils import add_0x_prefix
 from ledgerblue.comm import getDongle
 from ledgerblue.commException import CommException
