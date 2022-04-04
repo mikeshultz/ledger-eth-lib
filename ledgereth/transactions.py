@@ -2,7 +2,7 @@ import binascii
 from typing import List, Optional, Tuple, Union
 
 from eth_utils import decode_hex
-from rlp import Serializable, decode, encode
+from rlp import Serializable, encode
 
 from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
@@ -161,7 +161,7 @@ def create_transaction(
     max_fee_per_gas: int = 0,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
-    access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
+    access_list: Optional[List[Tuple[Union[bytes, str], List[int]]]] = None,
     dongle: Optional[Dongle] = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from given arguments.

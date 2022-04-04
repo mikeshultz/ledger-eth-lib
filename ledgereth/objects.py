@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import IntEnum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from eth_utils import encode_hex, to_checksum_address
 from rlp import Serializable, decode, encode
@@ -350,7 +350,7 @@ class Type1Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[int]]] = list(),
+        access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
     ):
         """Initialize an unsigned type 2 transaction
 
@@ -361,9 +361,10 @@ class Type1Transaction(SerializableTransaction):
         :param destination: (``bytes``) Destination address
         :param amount: (``int``) Amount of Ether to send in wei
         :param data: (``bytes``) Transaction data
-        :param access_list: (``List[Tuple[bytes, List[int]]]``) EIP-2718 Access
+        :param access_list: (``Optional[List[Tuple[bytes, List[int]]]]``) EIP-2718 Access
             list
         """
+        access_list = access_list or []
         super().__init__(
             chain_id,
             nonce,
@@ -430,7 +431,7 @@ class Type2Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[int]]] = list(),
+        access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
     ):
         """Initialize an unsigned type 2 transaction
 
@@ -447,6 +448,7 @@ class Type2Transaction(SerializableTransaction):
         :param access_list: (``List[Tuple[bytes, List[int]]]``) EIP-2718 Access
             list
         """
+        access_list = access_list or []
         super().__init__(
             chain_id,
             nonce,
