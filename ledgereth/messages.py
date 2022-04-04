@@ -1,8 +1,8 @@
 import binascii
 import struct
-from typing import Any, Union
+from typing import Optional, Union
 
-from ledgereth.comms import dongle_send_data, init_dongle
+from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
 from ledgereth.objects import SignedMessage, SignedTypedMessage
 from ledgereth.utils import (
@@ -19,9 +19,19 @@ AnyText = Union[str, bytes]
 def sign_message(
     message: AnyText,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedMessage:
-    """Sign a transaction object (rlp.Serializable)"""
+    """Sign a simple text message.  Message will be prefixed by the Ethereum
+    app on the Ledger device according to `EIP-191`_.
+
+    :param message: (:code:`str|bytes`) - A bit of text to sign
+    :param sender_path: (:code:`str`) - HID derivation path for the account to
+        sign with.
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) - The Web3 instance to use
+    :return: :class:`ledgereth.objects.SignedMessage`
+
+    .. _`EIP-191`: https://eips.ethereum.org/EIPS/eip-191
+    """
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
     retval = None
@@ -81,12 +91,28 @@ def sign_typed_data_draft(
     domain_hash: AnyText,
     message_hash: AnyText,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedTypedMessage:
-    """Sign typed data.
+    """Sign `EIP-721`_ typed data.
 
-    NOTE: EIP-712 is still in DRAFT status and APIs may change, including the
-    Ledger app-ethereum implementation.
+    .. DANGER::
+        EIP-712 is still in DRAFT status and APIs may change, including the
+        Ledger app-ethereum implementation.
+
+    :param domain_hash: (:code:`str`) - Hash of the EIP-712 domain
+    :param message_hash: (:code:`str`) - Hash of the message
+    :param sender_path: (:code:`str`) - HID derivation path for the account to
+        sign with. Defaults to first account in the derivation path.
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
+        use to communicate with the Ledger device
+    :return: :class:`ledgereth.objects.SignedTypedMessage` Signed message object
+
+    For a real example of usage, see how this is used with `eth_account`_ in
+    `ledgereth's unit tests`_.
+
+    .. _`EIP-721`: https://eips.ethereum.org/EIPS/eip-712
+    .. _`eth_account`: https://eth-account.readthedocs.io/
+    .. _`ledgereth's unit tests`: https://github.com/mikeshultz/ledger-eth-lib/blob/2e47e7b9d70136a6dda0229c7bf516ed6bbe850f/tests/test_message_signing.py#L55-L74
     """
 
     given_dongle = dongle is not None
