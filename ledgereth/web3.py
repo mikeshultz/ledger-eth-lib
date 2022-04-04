@@ -1,12 +1,5 @@
-"""
-Web3.py middlware that leverages ledgereth for signing functionarliy.
-
-Notes
------
-- Some of the following imports utilize web3.py deps that are not deps of
-    ledgereth.
-"""
-
+# Some of the following imports utilize web3.py deps that are not deps of
+# ledgereth.
 from eth_account.messages import encode_structured_data
 from eth_utils import decode_hex, encode_hex
 from rlp import encode
@@ -47,6 +40,28 @@ https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 
 
 class LedgerSignerMiddleware:
+    """Web3.py middleware.  It will automatically intercept the relevant
+    JSON-RPC calls and respond with data from your Ledger device.
+
+    :Intercepted JSON-RPC methods:
+
+    - ``eth_sendTransaction`` (``web3.eth.send_transaction()``)
+    - ``eth_accounts`` (``web3.eth.accounts``)
+    - ``eth_sign`` (``web3.eth.sign()``)
+    - ``eth_signTypedData``  (``web3.eth.sign_typed_data()``)
+
+    :Example:
+
+    .. code:: python
+
+        >>> from web3.auto import w3
+        >>> from ledgereth.web3 import LedgerSignerMiddleware
+        >>> w3.middleware_onion.add(LedgerSignerMiddleware)
+        >>> w3.eth.accounts
+        ['0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', '0x8C8d35429F74ec245F8Ef2f4Fd1e551cFF97d650', '0x98e503f35D0a019cB0a251aD243a4cCFCF371F46']
+
+    """
+
     _dongle = None
 
     def __init__(self, make_request, w3):

@@ -1,10 +1,10 @@
 import binascii
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from eth_utils import decode_hex
 from rlp import Serializable, decode, encode
 
-from ledgereth.comms import dongle_send_data, init_dongle
+from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
 from ledgereth.objects import (
     SerializableTransaction,
@@ -30,9 +30,20 @@ Text = Union[str, bytes]
 def sign_transaction(
     tx: Serializable,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedTransaction:
-    """Sign a transaction object (rlp.Serializable)"""
+    """Sign a :class:`rlp.Serializable` transaction object.  Compatible with
+    ledgereth and web3.py transaction objects.
+
+    :param tx: (:class:`rlp.Serializable`) - Serializable transaction object to
+        sign
+    :param sender_path: (:code:`str`) - HID derivation path for the account to
+        sign with. Defaults to first account in the derivation path.
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
+        use to communicate with the Ledger device
+    :return: :class:`ledgereth.objects.SignedTransaction` instance for
+        transaction
+    """
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
     retval = None
@@ -151,19 +162,49 @@ def create_transaction(
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
     access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
-    dongle: Any = None,
+    dongle: Optional[Dongle] = None,
 ) -> SignedTransaction:
-    """Create and sign a transaction from indiv args"""
+    """Create and sign a transaction from given arguments.
+
+    :param destination: (:code:`str|bytes`) - Destination address (AKA :code:`to`)
+    :param amount: (:code:`int`) - Transaction value in wei
+    :param gas: (:code:`int`) - Gas limit for the transaction
+    :param nonce: (:code:`int`) - Nonce for the transaction
+    :param data: (:code:`str|bytes`) - Transaction data (e.g. contract calldata)
+    :param gas_price: (:code:`int`) - Gas price in wei to use for the
+        transaction.  This is not compatible with :code:`max_fee_per_gas`.
+    :param max_priority_fee_per_gas: (:code:`int`) - Priority fee per gas (in
+        wei) to provide to the miner of the block.
+    :param max_fee_per_gas: (:code:`int`) - Maximum fee in wei to pay for the
+        transaction.  This is not compatible with :code:`gas_price`.
+    :param chain_id: (:code:`int`) - Chain ID to limit the transaction to.
+        Defaults to :code:`1`.
+    :param sender_path: (:code:`str`) - `BIP-44`_ HD derivation path for the
+        account to sign with. Defaults to first account in the default
+        derivation path.
+    :param access_list: (:code:`List[Tuple[bytes, List[int]]]`) -
+        `EIP-2930`_ access list to use for the transaction.
+    :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
+        use to communicate with the Ledger device
+    :return: :class:`ledgereth.objects.SignedTransaction` instance for transaction
+
+    .. _`BIP-44`: https://en.bitcoin.it/wiki/BIP_0044
+    .. _`EIP-2930`: https://eips.ethereum.org/EIPS/eip-2930
+    """
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
 
-    if is_hex_string(destination):
+    if type(destination) == str and is_hex_string(destination):
         destination = decode_hex(destination)
 
     if not data:
         data = b""
-    elif is_hex_string(data):
+    elif type(data) == str and is_hex_string(data):
         data = decode_hex(data)
+
+    # be cool mypy
+    assert type(destination) == bytes
+    assert type(data) == bytes
 
     # EIP-1559 transactions should never have gas_price
     if gas_price and (max_priority_fee_per_gas or max_fee_per_gas):
@@ -219,8 +260,15 @@ def create_transaction(
     return signed
 
 
-def decode_transaction(rawtx: bytes, signed=False) -> SerializableTransaction:
-    """Decode a raw transaction to a Serializable transaction object"""
+def decode_transaction(rawtx: bytes, signed: bool = False) -> SerializableTransaction:
+    """Decode a raw transaction to a Serializable transaction object
+
+    :param rawtx: (:code:`bytes`) - Raw transaction to decode
+    :param signed: (:code:`bool`) - If the raw transaction is a signed
+        transaction.
+    :return: Decoded :class:`ledgereth.objects.SerializableTransaction` instance
+        for transaction
+    """
     tx_type = rawtx[0]
 
     tx = None
