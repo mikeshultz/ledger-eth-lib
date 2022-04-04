@@ -322,7 +322,8 @@ class Type1Transaction(SerializableTransaction):
 
     Encoded tx format spec:
 
-    ..code::
+    .. code::
+
         0x01 || rlp([chainId, nonce, gasPrice, gasLimit, destination, amount, data, accessList])
     """
 
@@ -399,7 +400,8 @@ class Type2Transaction(SerializableTransaction):
 
     Encoded TX format spec:
 
-    ..code::
+    .. code::
+
         0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list])
     """
 
@@ -777,8 +779,11 @@ class SignedType2Transaction(SerializableTransaction):
 
 
 class Signed(ABC):
+    #: Signature v
     v: int
+    #: Signature r
     r: int
+    #: Signature s
     s: int
 
     def __init__(self, v, r, s):
