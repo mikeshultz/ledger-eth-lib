@@ -13,7 +13,6 @@ import re
 
 import pytest
 import rlp
-
 from eth_utils import decode_hex, encode_hex
 
 from ledgereth.comms import (
