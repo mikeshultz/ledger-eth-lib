@@ -1,3 +1,5 @@
+from typing import Optional
+
 from eth_utils import add_0x_prefix
 from ledgerblue.comm import getDongle
 from ledgerblue.commException import CommException
@@ -7,8 +9,8 @@ from ledgereth.constants import DEFAULT_PATH_ENCODED
 from ledgereth.exceptions import LedgerError
 from ledgereth.objects import ISO7816Command
 
-DONGLE_CACHE: Dongle
-DONGLE_CONFIG_CACHE: bytes
+DONGLE_CACHE: Optional[Dongle] = None
+DONGLE_CONFIG_CACHE: Optional[bytes] = None
 
 
 class LedgerCommands:

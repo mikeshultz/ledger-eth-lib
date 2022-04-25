@@ -20,6 +20,7 @@ from ledgereth.comms import (
     decode_response_version_from_config,
     dongle_send,
     dongle_send_data,
+    init_dongle,
 )
 from ledgereth.constants import (
     DATA_CHUNK_SIZE,
@@ -50,6 +51,26 @@ def test_chunks(data_size):
     assert len(parts) == chunks_count
     assert len(parts[-1]) == remainder if remainder else True
     assert b"".join(parts) == data
+
+
+def test_comms_init_dongle_patched(monkeypatch, yield_dongle):
+    with yield_dongle() as dongle:
+
+        def _getDongle(debug=False):
+            return dongle
+
+        monkeypatch.setattr("ledgereth.comms.getDongle", _getDongle)
+
+        dong = init_dongle()
+        # In this case, it's the same instance we passed it
+        assert dong == dongle
+
+
+def test_comms_init_dongle_mockdongle(yield_dongle):
+    with yield_dongle() as dongle:
+        dong = init_dongle(dongle)
+        # In this case, it's the same instance we passed it
+        assert dong == dongle
 
 
 def test_comms_config(yield_dongle):
