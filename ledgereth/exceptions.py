@@ -15,7 +15,9 @@ class LedgerErrorCodes(IntEnum):
     # This may happen if first/secondary data is invalid or out of order or
     # unexpected p1/p2 values
     INVALID_TX_CHUNKS = 0x6B00
+    # This can also mean ADPU empty, apparently
     CANCELED_BY_USER = 0x6982
+    APDU_SIZE_MISMATCH = 0x6983
     # Invalid data, transaction, or HD path, and a bit of a catch-all
     INVALID_DATA = 0x6A80
     APP_SLEEP = 0x6804
@@ -83,6 +85,10 @@ class LedgerCancel(LedgerError):
     message = "Action cancelled by the user"
 
 
+class LedgerInvalidADPU(LedgerError):
+    message = "Internal error.  Invalid data unit sent to ledger."
+
+
 class LedgerInvalid(LedgerError):
     message = 'Invalid data sent to ledger or "blind signing" is not enabled'
 
@@ -94,6 +100,7 @@ ERROR_CODE_EXCEPTIONS = {
     LedgerErrorCodes.APP_NOT_STARTED: LedgerAppNotOpened,
     LedgerErrorCodes.APP_NOT_FOUND: LedgerAppNotOpened,
     LedgerErrorCodes.CANCELED_BY_USER: LedgerCancel,
+    LedgerErrorCodes.APDU_SIZE_MISMATCH: LedgerInvalidADPU,
     LedgerErrorCodes.DECLINED: LedgerCancel,
     LedgerErrorCodes.INVALID_DATA: LedgerInvalid,
 }

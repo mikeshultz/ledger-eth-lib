@@ -33,8 +33,8 @@ def get_account_by_path(
     """
     dongle = init_dongle(dongle)
     path = parse_bip32_path(path_string)
-    lc = len(path).to_bytes(1, "big")
     data = (len(path) // 4).to_bytes(1, "big") + path
+    lc = len(data).to_bytes(1, "big")
     response = dongle_send_data(dongle, "GET_ADDRESS_NO_CONFIRM", data, Lc=lc)
     return LedgerAccount(path_string, decode_response_address(response))
 

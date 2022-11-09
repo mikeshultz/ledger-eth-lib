@@ -25,8 +25,6 @@ class LedgerCommands:
         INS=b"\x06",
         P1=b"\x00",
         P2=b"\x00",
-        Lc=b"\x00",
-        Le=b"\x04",
     )
 
     GET_DEFAULT_ADDRESS_NO_CONFIRM = ISO7816Command(
@@ -34,7 +32,6 @@ class LedgerCommands:
         INS=b"\x02",
         P1=b"\x00",  # 0x00 - Return addres | 0x01 - Confirm befor ereturning
         P2=b"\x00",  # 0x00 - No chain code | 0x01 - With chain code
-        Lc=len(DEFAULT_PATH_ENCODED).to_bytes(1, "big"),  # Payload byte length
         data=(len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, "big") + DEFAULT_PATH_ENCODED,
     )
 
@@ -43,8 +40,6 @@ class LedgerCommands:
         INS=b"\x02",
         P1=b"\x00",  # 0x00 - Return addres | 0x01 - Confirm befor ereturning
         P2=b"\x00",  # 0x00 - No chain code | 0x01 - With chain code
-        # Lc=len(DEFAULT_PATH_ENCODED).to_bytes(1, 'big'),  # Payload byte length
-        # data=(len(DEFAULT_PATH_ENCODED) // 4).to_bytes(1, 'big') + DEFAULT_PATH_ENCODED,
     )
 
     SIGN_TX_FIRST_DATA = ISO7816Command(
@@ -141,12 +136,28 @@ def decode_response_address(response):
 
 
 def is_usable_version(confbytes: bytes) -> bool:
-    """Only tested on 1.2.4"""
+    """Only tested since 1.2.4 up to 1.10.0"""
     version = decode_response_version_from_config(confbytes)
     v_parts = version.split(".")
     ver = [int(s) for s in v_parts]
+
     # v9.9.9 is MockLedger
-    return ver[0] == 9 or not any([ver[0] != 1, ver[1] < 2, ver[2] < 4])
+    if ver[0] == 9:
+        return True
+
+    # Major must be v1
+    if ver[0] != 1:
+        return False
+
+    # Minor must not be below 2 because untested
+    if ver[1] < 2:
+        return False
+
+    # Patch must not be below 4 if v1.2
+    if ver[1] == 2 and ver[2] < 4:
+        return False
+
+    return True
 
 
 def init_dongle(dongle: Dongle = None, debug: bool = False) -> Dongle:
