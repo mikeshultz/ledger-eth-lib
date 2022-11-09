@@ -6,7 +6,7 @@ Install
 System Requirements
 *******************
 
-Some system level depenencies may be required for `ledgereth` to communicate with your Ledger.  These are the same `dependencies for ledgerblue`_. Python >= 3.6 is required.
+Some system level depenencies may be required for `ledgereth` to communicate with your Ledger.  These are the same `dependencies for ledgerblue`_. Python >= 3.8 is required.
 
 .. _`dependencies for ledgerblue`: https://github.com/LedgerHQ/blue-loader-python#installation-pre-requisites
 
@@ -46,8 +46,6 @@ Ledger also created a `useful script and rules file`_ that you can use.  For mor
 
 .. _`useful script and rules file`: https://github.com/LedgerHQ/udev-rules
 .. _`Ledger support site for connectivity issues`: https://support.ledger.com/hc/en-us/articles/115005165269-Connection-issues-with-Windows-or-Linux?support=true
-
-NOTE: Is cython a dep on every system? - what depends on this?
 
 ------
 Ubuntu
