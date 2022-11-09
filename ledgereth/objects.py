@@ -98,7 +98,7 @@ class ISO7816Command:
         self.INS = INS
         self.P1 = P1
         self.P2 = P2
-        self.Lc = Lc or b"\x00"
+        self.Lc = Lc or b"\x00" if not data else len(data).to_bytes(1, "big")
         self.Le = Le
         self.data = data
 

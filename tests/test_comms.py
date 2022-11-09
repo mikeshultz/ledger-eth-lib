@@ -104,9 +104,8 @@ def test_comms_multiple_accounts(yield_dongle):
     with yield_dongle() as dongle:
         for i in range(5):
             path = parse_bip32_path(f"44'/60'/0'/0/{i}")
-            lc = len(path).to_bytes(1, "big")
             data = (len(path) // 4).to_bytes(1, "big") + path
-            resp = dongle_send_data(dongle, GET_ADDRESS_NO_CONFIRM, data, Lc=lc)
+            resp = dongle_send_data(dongle, GET_ADDRESS_NO_CONFIRM, data)
 
             assert type(resp) == bytearray
 
@@ -139,12 +138,7 @@ def test_comms_sign_small_tx(yield_dongle):
             + DEFAULT_PATH_ENCODED
             + encoded_tx
         )
-        vrsbytes = dongle_send_data(
-            dongle,
-            SIGN_TX_FIRST_DATA,
-            payload,
-            Lc=int(len(payload)).to_bytes(1, "big"),
-        )
+        vrsbytes = dongle_send_data(dongle, SIGN_TX_FIRST_DATA, payload)
 
         assert type(vrsbytes) == bytearray
 
@@ -188,19 +182,9 @@ def test_comms_sign_large_tx(yield_dongle):
         for chunk in chunks(payload, DATA_CHUNK_SIZE):
             chunk_size = len(chunk)
             if chunk_count == 0:
-                retval = dongle_send_data(
-                    dongle,
-                    "SIGN_TX_FIRST_DATA",
-                    chunk,
-                    Lc=chunk_size.to_bytes(1, "big"),
-                )
+                retval = dongle_send_data(dongle, "SIGN_TX_FIRST_DATA", chunk)
             else:
-                retval = dongle_send_data(
-                    dongle,
-                    "SIGN_TX_SECONDARY_DATA",
-                    chunk,
-                    Lc=chunk_size.to_bytes(1, "big"),
-                )
+                retval = dongle_send_data(dongle, "SIGN_TX_SECONDARY_DATA", chunk)
             chunk_count += 1
 
         if (chain_id * 2 + 35) + 1 > 255:
