@@ -21,13 +21,13 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "ledgereth"
-copyright = "2021, Mike Shultz"
+copyright = "2022, Mike Shultz"
 author = "Mike Shultz"
 
 # The short X.Y version
-version = "0.8"
+version = "0.7.3"
 # The full version, including alpha/beta/rc tags
-release = "0.8.2b1"
+release = "0.7.3"
 
 
 # -- General configuration ---------------------------------------------------
