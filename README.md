@@ -4,7 +4,7 @@
 
 **This library is beta.  Please [report any bugs](https://github.com/mikeshultz/ledger-eth-lib/issues/new) you find.**
 
-This is a library to interact with [ledger-app-eth](https://github.com/LedgerHQ/ledger-app-eth), the Ethereum app for the [Ledger hardware wallets](https://www.ledger.com/).  It's goal is to make interfacing with the Ledger nice and simple with well known Ethereum+Python tools.
+This is a library to interact with [app-ethereum](https://github.com/LedgerHQ/app-ethereum), the Ethereum app for the [Ledger hardware wallets](https://www.ledger.com/).  It's goal is to make interfacing with the Ledger easy.
 
 ## Quickstart
 
