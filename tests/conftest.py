@@ -40,12 +40,9 @@ class MockDongle:
         self.account = None
         self.stack = []
 
-    def _sign_transaction(self, encoded_tx):
-        """Sign transaction data sent to the Ledger"""
-        tx = decode_transaction(encoded_tx)
-        resp = self.account.sign_transaction(tx.to_rpc_dict())
-
-        v = resp.v.to_bytes(1, "big")
+    def _resp_to_bytearray(self, resp):
+        # for large chain_id, v can be bigger than a byte. we'll take the lowest byte for the signature
+        v = resp.v.to_bytes(8, "big")[7].to_bytes(1, "big")
         r = resp.r.to_bytes(32, "big")
         s = resp.s.to_bytes(32, "big")
 
@@ -53,20 +50,20 @@ class MockDongle:
         self._reset()
 
         return bytearray(v + r + s)
+
+    def _sign_transaction(self, encoded_tx):
+        """Sign transaction data sent to the Ledger"""
+        tx = decode_transaction(encoded_tx)
+        resp = self.account.sign_transaction(tx.to_rpc_dict())
+
+        return self._resp_to_bytearray(resp)
 
     def _sign_message(self, encoded):
         """Sign message accodign to EIP-191"""
         signable = encode_defunct(encoded)
         resp = self.account.sign_message(signable)
 
-        v = resp.v.to_bytes(1, "big")
-        r = resp.r.to_bytes(32, "big")
-        s = resp.s.to_bytes(32, "big")
-
-        # Reset the stack and account MockLegder working with
-        self._reset()
-
-        return bytearray(v + r + s)
+        return self._resp_to_bytearray(resp)
 
     def _sign_typed(self, domain_hash, message_hash):
         """Sign message accodign to EIP-191"""
@@ -78,14 +75,7 @@ class MockDongle:
 
         resp = self.account.sign_message(signable)
 
-        v = resp.v.to_bytes(1, "big")
-        r = resp.r.to_bytes(32, "big")
-        s = resp.s.to_bytes(32, "big")
-
-        # Reset the stack and account MockLegder working with
-        self._reset()
-
-        return bytearray(v + r + s)
+        return self._resp_to_bytearray(resp)
 
     def handle_get_configuration(self, lc, data):
         # Return version 9.9.9
