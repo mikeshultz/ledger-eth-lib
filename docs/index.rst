@@ -40,6 +40,7 @@ people will probably not need these, but for some they may be critical.
    accounts
    transaction_signing
    message_signing
+   objects
    web3
 
 
