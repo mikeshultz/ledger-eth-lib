@@ -213,7 +213,7 @@ def create_transaction(
         )
 
     # we need a gas price for a valid transaction
-    if not gas_price and not max_fee_per_gas:
+    if gas_price is None and max_fee_per_gas is None:
         raise ValueError("gas_price or max_fee_per_gas must be provided")
 
     # Create a serializable tx object
