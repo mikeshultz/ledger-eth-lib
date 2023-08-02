@@ -20,6 +20,7 @@ from ledgereth.utils import (
 )
 
 address = Binary.fixed_length(20, allow_empty=False)
+address_allow_empty = Binary.fixed_length(20, allow_empty=True)
 access_list_sede_type = CountableList(
     ListSedes(
         [
@@ -252,7 +253,7 @@ class Transaction(SerializableTransaction):
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", address),
+        ("destination", address_allow_empty),
         ("amount", big_endian_int),
         ("data", binary),
         ("chain_id", big_endian_int),
@@ -332,7 +333,7 @@ class Type1Transaction(SerializableTransaction):
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", address),
+        ("destination", address_allow_empty),
         ("amount", big_endian_int),
         ("data", binary),
         ("access_list", access_list_sede_type),
@@ -412,7 +413,7 @@ class Type2Transaction(SerializableTransaction):
         ("max_priority_fee_per_gas", big_endian_int),
         ("max_fee_per_gas", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", address),
+        ("destination", address_allow_empty),
         ("amount", big_endian_int),
         ("data", binary),
         ("access_list", access_list_sede_type),
@@ -488,7 +489,7 @@ class SignedTransaction(SerializableTransaction):
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", address),
+        ("destination", address_allow_empty),
         ("amount", big_endian_int),
         ("data", binary),
         ("v", big_endian_int),
@@ -567,7 +568,7 @@ class SignedType1Transaction(SerializableTransaction):
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", address),
+        ("destination", address_allow_empty),
         ("amount", big_endian_int),
         ("data", binary),
         ("access_list", access_list_sede_type),
@@ -669,7 +670,7 @@ class SignedType2Transaction(SerializableTransaction):
         ("max_priority_fee_per_gas", big_endian_int),
         ("max_fee_per_gas", big_endian_int),
         ("gas_limit", big_endian_int),
-        ("destination", address),
+        ("destination", address_allow_empty),
         ("amount", big_endian_int),
         ("data", binary),
         ("access_list", access_list_sede_type),
