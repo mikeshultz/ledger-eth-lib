@@ -84,6 +84,33 @@ def test_rinkeby_send(yield_dongle):
         assert sender == Account.recover_transaction(signed.rawTransaction)
 
 
+def test_zero_gas_price(yield_dongle):
+    """Test a transaction with a 0 gas price"""
+    chain_id = 80001
+    destination = "0xf0155486a14539f784739be1c02e93f28eb8e960"
+
+    with yield_dongle() as dongle:
+        sender = get_accounts(dongle=dongle, count=1)[0].address
+
+        signed = create_transaction(
+            destination=destination,
+            amount=int(10e17),
+            gas=int(1e6),
+            gas_price=int(1e9),
+            data="",
+            nonce=2023,
+            chain_id=chain_id,
+            dongle=dongle,
+        )
+
+        print("signed:", signed)
+
+        assert signed.v in [(chain_id * 2 + 35) + x for x in (0, 1)]
+        assert signed.r
+        assert signed.s
+        assert sender == Account.recover_transaction(signed.rawTransaction)
+
+
 def test_eip2930_send(yield_dongle):
     """Test a type 1 (EIP-2930) transaction"""
     chain_id = 137
