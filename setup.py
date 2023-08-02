@@ -70,7 +70,7 @@ setup(
             "README.md",
             "LICENSE",
         ],
-        "ledgereth": ["py.typed"]
+        "ledgereth": ["py.typed"],
     },
     cmdclass={
         "lint": LintCommand,
