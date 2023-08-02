@@ -212,10 +212,6 @@ def create_transaction(
             "gas_price is incompatible with max_priority_fee_per_gas and max_fee_per_gas"
         )
 
-    # we need a gas price for a valid transaction
-    if gas_price is None and max_fee_per_gas is None:
-        raise ValueError("gas_price or max_fee_per_gas must be provided")
-
     # Create a serializable tx object
     if max_fee_per_gas:
         tx = Type2Transaction(
