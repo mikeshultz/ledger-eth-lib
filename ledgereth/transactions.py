@@ -203,8 +203,8 @@ def create_transaction(
         data = decode_hex(data)
 
     # be cool mypy
-    assert type(destination) == bytes
-    assert type(data) == bytes
+    assert isinstance(destination, bytes)
+    assert isinstance(data, bytes)
 
     # EIP-1559 transactions should never have gas_price
     if gas_price and (max_priority_fee_per_gas or max_fee_per_gas):
