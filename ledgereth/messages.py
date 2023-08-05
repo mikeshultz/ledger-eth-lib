@@ -40,7 +40,7 @@ def sign_message(
         message = message.encode("utf-8")
 
     # Silence mypy due to type cohersion above
-    assert type(message) == bytes
+    assert isinstance(message, bytes)
 
     encoded = struct.pack(">I", len(message))
     encoded += message
@@ -125,8 +125,8 @@ def sign_typed_data_draft(
         message_hash = message_hash.encode("utf-8")
 
     # Silence mypy due to type cohersion above
-    assert type(domain_hash) == bytes
-    assert type(message_hash) == bytes
+    assert isinstance(domain_hash, bytes)
+    assert isinstance(message_hash, bytes)
 
     encoded = domain_hash + message_hash
 

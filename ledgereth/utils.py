@@ -138,7 +138,7 @@ def decode_web3_access_list(
         if "storageKeys" not in item:
             raise ValueError(f"Access list item at position {idx} missing storageKeys")
 
-        assert type(item["address"]) == str
+        assert isinstance(item["address"], str)
 
         work_list.append(
             (
