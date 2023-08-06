@@ -14,7 +14,8 @@ DONGLE_CONFIG_CACHE: Optional[bytes] = None
 
 
 class LedgerCommands:
-    """APDU commands for communication with ledger-app-eth.  Tested only on a Ledger Nano S.
+    """APDU commands for communication with Ledger's app-ethereum.  Tested on
+    Ledger Nano S and Nano X.
 
     See `ledger-app-eth<https://github.com/LedgerHQ/ledger-app-eth/blob/master/doc/ethapp.asc>`_
     documentation.
@@ -86,7 +87,7 @@ class LedgerCommands:
 
     @staticmethod
     def get_with_data(
-        name: str, data: bytes, Lc: bytes = None, Le: bytes = None
+        name: str, data: bytes, Lc: Optional[bytes] = None, Le: Optional[bytes] = None
     ) -> bytes:
         if not hasattr(LedgerCommands, name):
             raise ValueError("Command not available")
@@ -109,7 +110,11 @@ def dongle_send(dongle: Dongle, command_string: str) -> bytes:
 
 
 def dongle_send_data(
-    dongle: Dongle, command_string: str, data: bytes, Lc: bytes = None, Le: bytes = None
+    dongle: Dongle,
+    command_string: str,
+    data: bytes,
+    Lc: Optional[bytes] = None,
+    Le: Optional[bytes] = None,
 ) -> bytes:
     """Send a command with data to the dongle"""
     hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)

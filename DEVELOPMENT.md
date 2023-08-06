@@ -2,7 +2,7 @@
 
 ## Docs
 
-A goo dway to work on docs is to use `sphinx-autobuild` that will build the docs and start a local Web server that will auto-reload on save.
+A good way to work on docs is to use `sphinx-autobuild` that will build the docs and start a local Web server that will auto-reload on save.
 
     sphinx-autobuild --watch ledgereth/ docs/ build/docs/
 
