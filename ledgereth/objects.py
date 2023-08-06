@@ -80,9 +80,9 @@ class ISO7816Command:
         INS: bytes,
         P1: bytes,
         P2: bytes,
-        Lc: bytes = None,
-        Le: bytes = None,
-        data: bytes = None,
+        Lc: Optional[bytes] = None,
+        Le: Optional[bytes] = None,
+        data: Optional[bytes] = None,
     ):
         if not (
             is_bytes(CLA)
@@ -103,7 +103,7 @@ class ISO7816Command:
         self.Le = Le
         self.data = data
 
-    def set_data(self, data: bytes, Lc: bytes = None) -> None:
+    def set_data(self, data: bytes, Lc: Optional[bytes] = None) -> None:
         """Set the command data and its length
 
         :param data: (:class:`bytes`) - The raw ``bytes`` data. This should not
@@ -243,8 +243,8 @@ class Transaction(SerializableTransaction):
 
     .. note:: A chain_id is set by default (``1``).  It is not required to be
         a valid legacy transaction, but without it your transaction is
-        suceptible to replay attack.  If for some reason you absolutely do not want it in your
-        tx, set it to ``None``.
+        suceptible to replay attack.  If for some reason you absolutely do not
+        want it in your tx, set it to ``None``.
 
     .. _`EIP-155`: https://eips.ethereum.org/EIPS/eip-155
     """

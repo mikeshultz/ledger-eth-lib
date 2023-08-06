@@ -1,7 +1,5 @@
 import os
-from typing import Any, Dict, Type
-
-from eth_utils import remove_0x_prefix
+from typing import Any, Dict
 
 
 def getenvint(key, default=0):
@@ -31,14 +29,14 @@ DEFAULT_PATH_ENCODED = (
 if LEGACY_ACCOUNTS:
     DEFAULT_PATH_STRING = "44'/60'/0'/0"
     DEFAULT_PATH_ENCODED = b"\x80\x00\x00,\x80\x00\x00<\x80\x00\x00\x00\x00\x00\x00\x00"
-DEFAULT_PATH = remove_0x_prefix(DEFAULT_PATH_ENCODED.hex())
+DEFAULT_PATH = DEFAULT_PATH_ENCODED.hex()
 VRS_RETURN_LENGTH = int(65).to_bytes(1, "big")
 
 # Data size expected from Ledger
 DATA_CHUNK_SIZE = 255
 
 # Default "zero" values in EVM/Solidity
-DEFAULTS: Dict[Type, Any] = {
+DEFAULTS: Dict[type, Any] = {
     int: 0,
     bytes: b"",
 }

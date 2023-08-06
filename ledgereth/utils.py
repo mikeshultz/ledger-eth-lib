@@ -191,7 +191,9 @@ def coerce_access_list(access_list):
     return access_list
 
 
-def coerce_list_types(types: List[Type], to_coerce: List[Any]) -> List[Any]:
+def coerce_list_types(
+    types: List[Optional[type]], to_coerce: List[Union[Any, None]]
+) -> List[Any]:
     """Coerce types of a list to given types in order"""
 
     for i, v in enumerate(to_coerce):
@@ -199,13 +201,17 @@ def coerce_list_types(types: List[Type], to_coerce: List[Any]) -> List[Any]:
         if types[i] is None:
             continue
 
+        # Only way to get mypy to chill was to assign to its own var
+        this_type = types[i]
+        assert this_type is not None
+
         # Some things don't transalate, like b'' being 0
         if not v:
-            to_coerce[i] = DEFAULTS[types[i]]
+            to_coerce[i] = DEFAULTS[this_type]
         else:
             if types[i] in COERCERS:
-                to_coerce[i] = COERCERS[types[i]](v)
+                to_coerce[i] = COERCERS[this_type](v)
             else:
-                to_coerce[i] = types[i](v)
+                to_coerce[i] = this_type(v)
 
     return to_coerce

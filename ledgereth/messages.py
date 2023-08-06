@@ -25,7 +25,7 @@ def sign_message(
     app on the Ledger device according to `EIP-191`_.
 
     :param message: (:code:`str|bytes`) - A bit of text to sign
-    :param sender_path: (:code:`str`) - HID derivation path for the account to
+    :param sender_path: (:code:`str`) - HD derivation path for the account to
         sign with.
     :param dongle: (:class:`ledgerblue.Dongle.Dongle`) - The Web3 instance to use
     :return: :class:`ledgereth.objects.SignedMessage`
@@ -101,7 +101,7 @@ def sign_typed_data_draft(
 
     :param domain_hash: (:code:`str`) - Hash of the EIP-712 domain
     :param message_hash: (:code:`str`) - Hash of the message
-    :param sender_path: (:code:`str`) - HID derivation path for the account to
+    :param sender_path: (:code:`str`) - HD derivation path for the account to
         sign with. Defaults to first account in the derivation path.
     :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
         use to communicate with the Ledger device
