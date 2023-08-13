@@ -41,7 +41,8 @@ class MockDongle:
         self.stack = []
 
     def _resp_to_bytearray(self, resp):
-        # for large chain_id, v can be bigger than a byte. we'll take the lowest byte for the signature
+        # for large chain_id, v can be bigger than a byte. we'll take the lowest
+        # byte for the signature
         v = resp.v.to_bytes(8, "big")[7].to_bytes(1, "big")
         r = resp.r.to_bytes(32, "big")
         s = resp.s.to_bytes(32, "big")

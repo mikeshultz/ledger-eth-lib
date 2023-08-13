@@ -53,6 +53,8 @@ RPC_TX_PROPS = [
     "chainId",
     "accessList",
 ]
+MAX_LEGACY_CHAIN_ID = 0xFFFFFFFF + 1
+MAX_CHAIN_ID = 0x38D7EA4C67FFF
 
 
 class TransactionType(IntEnum):
@@ -241,6 +243,9 @@ class SerializableTransaction(Serializable):
 class Transaction(SerializableTransaction):
     """Unsigned legacy or `EIP-155`_ transaction
 
+    .. warning:: chain_id for type 0 ("Legacy") transactions must be less than
+        4294967295, the largest 32-bit unsigned integer.
+
     .. note:: A chain_id is set by default (``1``).  It is not required to be
         a valid legacy transaction, but without it your transaction is
         suceptible to replay attack.  If for some reason you absolutely do not
@@ -289,6 +294,18 @@ class Transaction(SerializableTransaction):
         :param dummy1: (``int``) **DO NOT SET**
         :param dummy2: (``int``) **DO NOT SET**
         """
+
+        if chain_id > MAX_LEGACY_CHAIN_ID:
+            """Chain IDs above 32-bits seems to cause app-ethereum to create
+            invalid signatures.  It's not yet clear why this is, or where the
+            bug is, or even if it's a bug.  See the following issue for details:
+
+            https://github.com/mikeshultz/ledger-eth-lib/issues/41
+            """
+            raise ValueError(
+                "chain_id must be a 32-bit integer for type 0 transactions. (See issue #41)"
+            )
+
         super().__init__(
             nonce,
             gas_price,
@@ -320,6 +337,9 @@ class Transaction(SerializableTransaction):
 
 class Type1Transaction(SerializableTransaction):
     """An unsigned Type 1 transaction.
+
+    .. warning:: chain_id for type 1 transactions must be less than 999999999999999,
+        the largest unsigned integer that the device can render on-screen.
 
     Encoded tx format spec:
 
@@ -366,6 +386,18 @@ class Type1Transaction(SerializableTransaction):
             list
         """
         access_list = access_list or []
+
+        if chain_id > MAX_CHAIN_ID:
+            """Chain IDs above 999999999999999 cause app-ethereum to throw an error
+            because its unable to render on the device.
+
+            Ref: https://github.com/mikeshultz/ledger-eth-lib/issues/41
+            Ref: https://github.com/LedgerHQ/app-ethereum/issues/283
+            """
+            raise ValueError(
+                "chain_id must not be above 999999999999999. (See issue #41)"
+            )
+
         super().__init__(
             chain_id,
             nonce,
@@ -399,6 +431,9 @@ class Type1Transaction(SerializableTransaction):
 
 class Type2Transaction(SerializableTransaction):
     """An unsigned Type 2 transaction.
+
+    .. warning:: chain_id for type 2 transactions must be less than 999999999999999,
+        the largest unsigned integer that the device can render on-screen.
 
     Encoded TX format spec:
 
@@ -450,6 +485,18 @@ class Type2Transaction(SerializableTransaction):
             list
         """
         access_list = access_list or []
+
+        if chain_id > MAX_CHAIN_ID:
+            """Chain IDs above 999999999999999 cause app-ethereum to throw an error
+            because its unable to render on the device.
+
+            Ref: https://github.com/mikeshultz/ledger-eth-lib/issues/41
+            Ref: https://github.com/LedgerHQ/app-ethereum/issues/283
+            """
+            raise ValueError(
+                "chain_id must not be above 999999999999999. (See issue #41)"
+            )
+
         super().__init__(
             chain_id,
             nonce,
