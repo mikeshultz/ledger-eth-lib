@@ -4,6 +4,7 @@ from eth_utils import encode_hex
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.providers.eth_tester import EthereumTesterProvider
+from web3.providers.eth_tester.defaults import API_ENDPOINTS, static_return
 from web3.types import TxReceipt, Wei
 
 from ledgereth.accounts import get_accounts
@@ -38,7 +39,11 @@ def fund_account(web3: Web3, address: str, amount: int = int(1e18)) -> TxReceipt
 
 def test_web3_middleware_legacy(yield_dongle):
     """Test LedgerSignerMiddleware with a legacy transaction"""
-    provider = EthereumTesterProvider()
+    endpoints = {**API_ENDPOINTS}
+    # Max chain ID for legacy transactions
+    # Ref: https://github.com/mikeshultz/ledger-eth-lib/issues/41
+    endpoints["eth"]["chainId"] = static_return(4294967295)
+    provider = EthereumTesterProvider(api_endpoints=endpoints)
     web3 = Web3(provider)
     clean_web3 = Web3(provider)
     alice_address = web3.eth.accounts[0]
