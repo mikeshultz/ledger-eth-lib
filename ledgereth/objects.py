@@ -191,8 +191,8 @@ class SerializableTransaction(Serializable):
         transaction
 
         :param rawtx: (:class:`bytes`) - The decoded raw transaction ``bytes``
-            to encode into a :class`ledgereth.objects.SerializableTransaction`
-        :return: Instantiated :class`ledgereth.objects.SerializableTransaction`
+            to encode into a :class:`ledgereth.objects.SerializableTransaction`
+        :return: Instantiated :class:`ledgereth.objects.SerializableTransaction`
         """
 
     def to_dict(self) -> Dict[str, Any]:
@@ -815,7 +815,7 @@ class SignedType2Transaction(SerializableTransaction):
 
         Encoded signed TX format spec:
 
-        ..code::
+        .. code::
 
             0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list, signature_y_parity, signature_r, signature_s])
 
