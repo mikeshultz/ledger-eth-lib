@@ -180,6 +180,14 @@ class LedgerAccount:
     def __repr__(self):
         return f"<ledgereth.objects.LedgerAccount {self.address}>"
 
+    def __eq__(self, other):
+        if isinstance(other, LedgerAccount):
+            return self.path == other.path and self.address == other.address
+        return False
+
+    def __hash__(self):
+        return hash((self.path, self.address))
+
 
 class SerializableTransaction(Serializable):
     """An RLP Serializable transaction object"""
