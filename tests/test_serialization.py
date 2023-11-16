@@ -1,10 +1,11 @@
 """
 Test objects and serialization
 """
-from eth_utils import decode_hex
+from eth_utils import decode_hex, is_checksum_address
 
 from ledgereth.constants import DEFAULT_CHAIN_ID, DEFAULTS
 from ledgereth.objects import (
+    LedgerAccount,
     SignedTransaction,
     SignedType1Transaction,
     SignedType2Transaction,
@@ -13,6 +14,23 @@ from ledgereth.objects import (
     Type2Transaction,
 )
 from ledgereth.transactions import create_transaction, sign_transaction
+
+
+def test_account():
+    """Test basic LedgerAccount behavior"""
+    alice = LedgerAccount(
+        "44'/60'/0'/0/0", "0x1D35202a64A06633A793D43cEB82C1D54fC89233"
+    )
+    bob = LedgerAccount("44'/60'/1'/0/0", "0x1d35202a64a06633a793d43ceb82c1d54fc89233")
+
+    assert alice.address in repr(alice)
+    assert alice.address == bob.address
+    assert alice.path != bob.path
+    assert alice.path_encoded != bob.path_encoded
+    assert alice != bob
+    assert hash(alice) != hash(bob)
+    assert is_checksum_address(alice.address)
+    assert is_checksum_address(bob.address)
 
 
 def test_legacy_serialization(yield_dongle):
