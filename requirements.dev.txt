@@ -8,4 +8,6 @@ pytest>=5.3.2
 setuptools>=44.0.0
 twine>=3.1.1
 web3[tester]~=6.2.0
+# peer dep of eth-tester of web3[tester]
+eth-account==0.12.1
 wheel>=0.33.6
