@@ -1,8 +1,9 @@
 """
 Test higher level message signing functionality
 """
+
 from eth_account import Account
-from eth_account.messages import encode_defunct, encode_structured_data
+from eth_account.messages import encode_defunct, encode_typed_data
 from eth_utils import decode_hex, encode_hex
 
 from ledgereth.accounts import get_accounts
@@ -54,7 +55,7 @@ def test_sign_large_message(yield_dongle):
 
 def test_sign_typed_data(yield_dongle):
     """Test signing an EIP-712 typed data"""
-    signable = encode_structured_data(eip712_dict)
+    signable = encode_typed_data(full_message=eip712_dict)
 
     # header/body is eth_account naming, presumably to be generic
     domain_hash = signable.header

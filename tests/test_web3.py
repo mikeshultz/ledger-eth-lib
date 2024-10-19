@@ -1,5 +1,5 @@
 from eth_account import Account
-from eth_account.messages import encode_defunct, encode_structured_data
+from eth_account.messages import encode_defunct, encode_typed_data
 from eth_utils import encode_hex
 from web3 import Web3
 from web3.datastructures import AttributeDict
@@ -278,7 +278,7 @@ def test_web3_middleware_sign_text(yield_dongle):
 def test_web3_middleware_sign_typed_data(yield_dongle):
     """Test LedgerSignerMiddleware EIP-712 typed data signing"""
 
-    signable = encode_structured_data(eip712_dict)
+    signable = encode_typed_data(full_message=eip712_dict)
     provider = EthereumTesterProvider()
     web3 = Web3(provider)
     clean_web3 = Web3(provider)

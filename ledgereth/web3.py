@@ -1,8 +1,14 @@
+"""Web3.py middleware for Ledger devices."""
+
+from typing import Any
+
 # Some of the following imports utilize web3.py deps that are not deps of
 # ledgereth.
-from eth_account.messages import encode_structured_data
+from eth_account.messages import encode_typed_data
 from eth_utils import decode_hex, encode_hex
 from rlp import encode
+from web3.middleware import Web3Middleware
+from web3.types import MakeRequestFn, RPCEndpoint, RPCResponse
 
 from ledgereth.accounts import find_account, get_accounts
 from ledgereth.messages import sign_message, sign_typed_data_draft
@@ -39,7 +45,15 @@ https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 """
 
 
-class LedgerSignerMiddleware:
+def _make_response(result: Any) -> RPCResponse:
+    return {
+        "jsonrpc": "2.0",
+        "id": 1337,
+        "result": result,
+    }
+
+
+class LedgerSignerMiddleware(Web3Middleware):
     """Web3.py middleware.  It will automatically intercept the relevant
     JSON-RPC calls and respond with data from your Ledger device.
 
@@ -64,33 +78,33 @@ class LedgerSignerMiddleware:
 
     _dongle = None
 
-    def __init__(self, make_request, w3):
-        self.w3 = w3
-        self.make_request = make_request
+    def wrap_make_request(self, make_request: MakeRequestFn):
+        """Intercept some JSON-RPC requests and forward them to the Ledger device."""
 
-    def __call__(self, method, params):
-        if method == "eth_sendTransaction":
-            return self._handle_eth_sendTransaction(method, params)
+        def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+            if method == "eth_sendTransaction":
+                return self._handle_eth_sendTransaction(params, make_request)
+            elif method == "eth_accounts":
+                return self._handle_eth_accounts(params)
+            elif method == "eth_sign":
+                return self._handle_eth_sign(params)
+            elif method == "eth_signTypedData":
+                return self._handle_eth_signTypedData(params)
 
-        elif method == "eth_accounts":
-            return self._handle_eth_accounts(method, params)
+            # Send on to the next middleware(s)
+            return make_request(method, params)
 
-        elif method == "eth_sign":
-            return self._handle_eth_sign(method, params)
+        return middleware
 
-        elif method == "eth_signTypedData":
-            return self._handle_eth_signTypedData(method, params)
-
-        # Send on to the next middleware(s)
-        return self.make_request(method, params)
-
-    def _handle_eth_accounts(self, method, params):
+    def _handle_eth_accounts(self, _: Any) -> RPCResponse:
         """Handler for eth_accounts RPC calls"""
-        return {
-            "result": list(map(lambda a: a.address, get_accounts(dongle=self._dongle))),
-        }
+        return _make_response(
+            list(map(lambda a: a.address, get_accounts(dongle=self._dongle)))
+        )
 
-    def _handle_eth_sendTransaction(self, method, params):
+    def _handle_eth_sendTransaction(
+        self, params: Any, make_request: MakeRequestFn
+    ) -> RPCResponse:
         """Handler for eth_sendTransaction RPC calls"""
         new_params = []
 
@@ -121,21 +135,23 @@ class LedgerSignerMiddleware:
                 raise Exception(f"Account {sender_address} not found")
 
             if nonce is None:
-                nonce = self.w3.eth.get_transaction_count(sender_address)
+                nonce = self._w3.eth.get_transaction_count(sender_address)
 
             if "accessList" in tx_obj:
                 access_list = decode_web3_access_list(tx_obj["accessList"])
 
             signed_tx = create_transaction(
-                chain_id=self.w3.eth.chain_id,
+                chain_id=self._w3.eth.chain_id,
                 destination=tx_obj.get("to"),
                 amount=int(value, 16),
                 gas=int(gas, 16),
                 gas_price=int(gas_price, 16) if gas_price else None,
                 max_fee_per_gas=int(max_fee_per_gas, 16) if max_fee_per_gas else None,
-                max_priority_fee_per_gas=int(max_priority_fee_per_gas, 16)
-                if max_priority_fee_per_gas
-                else None,
+                max_priority_fee_per_gas=(
+                    int(max_priority_fee_per_gas, 16)
+                    if max_priority_fee_per_gas
+                    else None
+                ),
                 nonce=nonce,
                 data=tx_obj.get("data", b""),
                 sender_path=sender_account.path,
@@ -146,12 +162,12 @@ class LedgerSignerMiddleware:
             new_params.append(signed_tx.rawTransaction)
 
         # Change to raw tx call
-        method = "eth_sendRawTransaction"
+        method: RPCEndpoint = "eth_sendRawTransaction"
         params = new_params
 
-        return self.make_request(method, params)
+        return make_request(method, params)
 
-    def _handle_eth_sign(self, mehtod, params):
+    def _handle_eth_sign(self, params: Any) -> RPCResponse:
         """Handler for eth_sign RPC calls"""
         if len(params) != 2:
             raise ValueError("Unexpected RPC request params length for eth_sign")
@@ -162,11 +178,9 @@ class LedgerSignerMiddleware:
         signer_account = find_account(account, dongle=self._dongle)
         signed = sign_message(message, signer_account.path, dongle=self._dongle)
 
-        return {
-            "result": signed.signature,
-        }
+        return _make_response(signed.signature)
 
-    def _handle_eth_signTypedData(self, mehtod, params):
+    def _handle_eth_signTypedData(self, params: Any) -> RPCResponse:
         """Handler for eth_signTypedData RPC calls"""
         if len(params) != 2:
             raise ValueError("Unexpected RPC request params length for eth_sign")
@@ -180,7 +194,7 @@ class LedgerSignerMiddleware:
             )
 
         # Use eth_account to encode and hash the typed data
-        signable = encode_structured_data(typed_data)
+        signable = encode_typed_data(full_message=typed_data)
         domain_hash = signable.header
         message_hash = signable.body
 
@@ -190,6 +204,4 @@ class LedgerSignerMiddleware:
             domain_hash, message_hash, signer_account.path, dongle=self._dongle
         )
 
-        return {
-            "result": signed.signature,
-        }
+        return _make_response(signed.signature)

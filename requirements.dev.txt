@@ -1,13 +1,13 @@
 autoflake~=1.4
 black>=21.11b1
 bump2version~=1.0.1
-eth-account>=0.8.0
+eth-account>=0.13.1
 isort>=5.10.1
 mypy>=0.910
 pytest>=5.3.2
 setuptools>=44.0.0
 twine>=3.1.1
-web3[tester]~=6.2.0
+web3[tester]~=7.3.1
 # peer dep of eth-tester of web3[tester]
-eth-account==0.12.1
+#eth-account==0.12.1
 wheel>=0.33.6
