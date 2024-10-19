@@ -1,6 +1,7 @@
 """
 Test objects and serialization
 """
+
 from eth_utils import decode_hex, is_checksum_address
 
 from ledgereth.constants import DEFAULT_CHAIN_ID, DEFAULTS

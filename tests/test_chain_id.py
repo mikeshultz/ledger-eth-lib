@@ -1,4 +1,5 @@
 """Test signing for multiple chains"""
+
 import pytest
 from eth_account import Account
 
