@@ -7,6 +7,7 @@ TODO
     approve all the transactions when testing..  Might work with mock dongle if
     that ever gets done.
 """
+
 import binascii
 import os
 import re

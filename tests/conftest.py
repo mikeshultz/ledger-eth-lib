@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 import pytest
 from eth_account.account import Account
-from eth_account.messages import SignableMessage, encode_defunct, encode_structured_data
+from eth_account.messages import SignableMessage, encode_defunct
 from eth_utils import decode_hex, encode_hex
 from hexbytes import HexBytes
 from ledgerblue.comm import getDongle
@@ -195,7 +195,7 @@ class MockExceptionDongle(MockDongle):
         raise self.exception
 
     def close(self):
-        ...
+        pass
 
 
 def getMockDongle():
