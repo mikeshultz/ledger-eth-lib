@@ -2,6 +2,7 @@
 
 import os
 from contextlib import contextmanager
+from typing import Optional
 
 import pytest
 from eth_account.account import Account
@@ -217,7 +218,7 @@ def yield_dongle():
     """Yield a dongle for testing."""
 
     @contextmanager
-    def yield_yield_dongle(exception: LedgerError | None = None):
+    def yield_yield_dongle(exception: Optional[LedgerError] = None):
         if exception is not None:
             dongle = MockExceptionDongle(exception=exception)
             yield dongle

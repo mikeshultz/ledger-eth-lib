@@ -108,7 +108,7 @@ class LedgerCommands:
         return cmd.encode()
 
 
-def dongle_send(dongle: Dongle, command_string: str) -> bytes | None:
+def dongle_send(dongle: Dongle, command_string: str) -> Optional[bytes]:
     """Send a command to the dongle."""
     hex_command = LedgerCommands.get(command_string)
     try:
@@ -123,7 +123,7 @@ def dongle_send_data(
     data: bytes,
     Lc: Optional[bytes] = None,  # noqa: N803
     Le: Optional[bytes] = None,  # noqa: N803
-) -> bytes | None:
+) -> Optional[bytes]:
     """Send a command with data to the dongle."""
     hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)
     try:
@@ -169,7 +169,7 @@ def is_usable_version(confbytes: bytes) -> bool:
     return True
 
 
-def init_dongle(dongle: Dongle | None = None, debug: bool = False) -> Dongle:
+def init_dongle(dongle: Optional[Dongle] = None, debug: bool = False) -> Dongle:
     """Initialize the dongle and sanity check the connection."""
     global DONGLE_CACHE, DONGLE_CONFIG_CACHE
 

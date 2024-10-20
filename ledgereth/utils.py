@@ -9,6 +9,7 @@ from typing import (
     Dict,
     Generator,
     List,
+    Optional,
     Tuple,
     Type,
     Union,
@@ -31,7 +32,7 @@ def is_bytes(v: Any) -> bool:
     return isinstance(v, bytes)
 
 
-def is_optional_bytes(v: Any | None) -> bool:
+def is_optional_bytes(v: Optional[Any]) -> bool:
     """Detect if a string is a byte string or None."""
     return v is None or is_bytes(v)
 
@@ -129,7 +130,7 @@ def decode_access_list(
 
 
 def decode_web3_access_list(
-    access_list: Collection[dict[str, str | Collection[str]]],
+    access_list: Collection[dict[str, Union[str, Collection[str]]]],
 ) -> AccessList:
     """Decode a web3.py access list into friendly Python types."""
     work_list = []
@@ -161,7 +162,7 @@ def decode_web3_access_list(
     return work_list
 
 
-def coerce_access_list(access_list: AccessList | AccessListInput) -> AccessList:
+def coerce_access_list(access_list: Union[AccessList, AccessListInput]) -> AccessList:
     """Create RLP access list.
 
     Validates and type coerce an access list from Python friendly values to values for
@@ -209,7 +210,7 @@ def coerce_access_list(access_list: AccessList | AccessListInput) -> AccessList:
 
 
 def coerce_list_types(
-    types: List[type | None], to_coerce: List[Union[Any, None]]
+    types: List[Optional[type]], to_coerce: List[Union[Any, None]]
 ) -> List[Any]:
     """Coerce types of a list to given types in order."""
     for i, v in enumerate(to_coerce):
