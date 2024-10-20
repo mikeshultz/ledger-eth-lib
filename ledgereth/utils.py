@@ -1,19 +1,11 @@
 """Utility functions for ledgereth."""
 
+from __future__ import annotations
+
 import re
 import struct
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from collections.abc import Collection, Generator
+from typing import Any, Callable
 
 from eth_utils.hexadecimal import decode_hex
 
@@ -24,7 +16,7 @@ from ledgereth.types import AccessList, AccessListInput
 BIP32_ETH_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+/[0-9]+$"
 BIP32_LEGACY_LEDGER_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+$"
 
-COERCERS: Dict[Type, Callable] = {int: lambda v: int.from_bytes(v, "big")}
+COERCERS: dict[type, Callable] = {int: lambda v: int.from_bytes(v, "big")}
 
 
 def is_bytes(v: Any) -> bool:
@@ -32,7 +24,7 @@ def is_bytes(v: Any) -> bool:
     return isinstance(v, bytes)
 
 
-def is_optional_bytes(v: Optional[Any]) -> bool:
+def is_optional_bytes(v: Any | None) -> bool:
     """Detect if a string is a byte string or None."""
     return v is None or is_bytes(v)
 
@@ -110,8 +102,8 @@ def decode_bip32_path(path: bytes) -> str:
 
 
 def decode_access_list(
-    access_list: Collection[Tuple[bytes, Collection[bytes]]],
-) -> List[Tuple[bytes, Tuple[int, ...]]]:
+    access_list: Collection[tuple[bytes, Collection[bytes]]],
+) -> list[tuple[bytes, tuple[int, ...]]]:
     """Decode an access list into friendly Python types."""
     work_list = []
 
@@ -130,7 +122,7 @@ def decode_access_list(
 
 
 def decode_web3_access_list(
-    access_list: Collection[dict[str, Union[str, Collection[str]]]],
+    access_list: Collection[dict[str, str | Collection[str]]],
 ) -> AccessList:
     """Decode a web3.py access list into friendly Python types."""
     work_list = []
@@ -162,7 +154,7 @@ def decode_web3_access_list(
     return work_list
 
 
-def coerce_access_list(access_list: Union[AccessList, AccessListInput]) -> AccessList:
+def coerce_access_list(access_list: AccessList | AccessListInput) -> AccessList:
     """Create RLP access list.
 
     Validates and type coerce an access list from Python friendly values to values for
@@ -210,8 +202,8 @@ def coerce_access_list(access_list: Union[AccessList, AccessListInput]) -> Acces
 
 
 def coerce_list_types(
-    types: List[Optional[type]], to_coerce: List[Union[Any, None]]
-) -> List[Any]:
+    types: list[type | None], to_coerce: list[Any | None]
+) -> list[Any]:
     """Coerce types of a list to given types in order."""
     for i, v in enumerate(to_coerce):
         # SKIP!
