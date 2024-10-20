@@ -31,6 +31,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+    "build~=1.2.2",
     "eth-account>=0.13.1",
     "pyright~=1.1.385",
     "pytest>=5.3.2",
