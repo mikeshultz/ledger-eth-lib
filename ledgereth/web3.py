@@ -46,8 +46,8 @@ https://github.com/ethereum/EIPs/issues/84#issuecomment-292324521
 class AccountNotFoundError(ValueError):
     """An account with the given address was not found on the Ledger device.
 
-    NOTE: This might raise if the account is not within MAX_ACCOUNTS_FETCH iteractions
-    on the derivation path.
+    .. warning:: This might raise if the account is not found within MAX_ACCOUNTS_FETCH
+        iterations on the derivation path.
     """
 
     pass
