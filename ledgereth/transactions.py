@@ -1,7 +1,8 @@
-import binascii
-from typing import List, Optional, Tuple, Union
+"""This module provides functions for creating and signing transactions."""
 
-from eth_utils import decode_hex
+import binascii
+
+from eth_utils.hexadecimal import decode_hex
 from rlp import Serializable, encode
 
 from ledgereth.comms import Dongle, dongle_send_data, init_dongle
@@ -16,6 +17,7 @@ from ledgereth.objects import (
     Type1Transaction,
     Type2Transaction,
 )
+from ledgereth.types import AccessList, AccessListInput, Text
 from ledgereth.utils import (
     chunks,
     coerce_access_list,
@@ -24,16 +26,15 @@ from ledgereth.utils import (
     parse_bip32_path,
 )
 
-Text = Union[str, bytes]
-
 
 def sign_transaction(
     tx: Serializable,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Optional[Dongle] = None,
+    dongle: Dongle | None = None,
 ) -> SignedTransaction:
-    """Sign a :class:`rlp.Serializable` transaction object.  Compatible with
-    ledgereth and web3.py transaction objects.
+    """Sign a :class:`rlp.Serializable` transaction object.
+
+    Compatible with both ledgereth and web3.py transaction objects.
 
     :param tx: (:class:`rlp.Serializable`) - Serializable transaction object to
         sign
@@ -63,7 +64,7 @@ def sign_transaction(
         raise ValueError("Invalid sender BIP32 path given to sign_transaction")
 
     path = parse_bip32_path(sender_path)
-    payload = (len(path) // 4).to_bytes(1, "big") + path + encoded_tx
+    payload = (len(path) // 4).to_bytes(1, "big") + path + bytes(encoded_tx)
 
     chunk_count = 0
     for chunk in chunks(payload, DATA_CHUNK_SIZE):
@@ -156,13 +157,13 @@ def create_transaction(
     gas: int,
     nonce: int,
     data: Text = b"",
-    gas_price: int = 0,
-    max_priority_fee_per_gas: int = 0,
-    max_fee_per_gas: int = 0,
+    gas_price: int | None = None,
+    max_priority_fee_per_gas: int | None = None,
+    max_fee_per_gas: int | None = None,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
-    access_list: Optional[List[Tuple[Union[bytes, str], List[int]]]] = None,
-    dongle: Optional[Dongle] = None,
+    access_list: AccessListInput | AccessList | None = None,
+    dongle: Dongle | None = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from given arguments.
 
@@ -171,11 +172,11 @@ def create_transaction(
     :param gas: (:code:`int`) - Gas limit for the transaction
     :param nonce: (:code:`int`) - Nonce for the transaction
     :param data: (:code:`str|bytes`) - Transaction data (e.g. contract calldata)
-    :param gas_price: (:code:`int`) - Gas price in wei to use for the
+    :param gas_price: (:code:`int|None`) - Gas price in wei to use for the
         transaction.  This is not compatible with :code:`max_fee_per_gas`.
-    :param max_priority_fee_per_gas: (:code:`int`) - Priority fee per gas (in
+    :param max_priority_fee_per_gas: (:code:`int|None`) - Priority fee per gas (in
         wei) to provide to the miner of the block.
-    :param max_fee_per_gas: (:code:`int`) - Maximum fee in wei to pay for the
+    :param max_fee_per_gas: (:code:`int|None`) - Maximum fee in wei to pay for the
         transaction.  This is not compatible with :code:`gas_price`.
     :param chain_id: (:code:`int`) - Chain ID to limit the transaction to.
         Defaults to :code:`1`.
@@ -194,12 +195,12 @@ def create_transaction(
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
 
-    if type(destination) == str and is_hex_string(destination):
+    if isinstance(destination, str) and is_hex_string(destination):
         destination = decode_hex(destination)
 
     if not data:
         data = b""
-    elif type(data) == str and is_hex_string(data):
+    elif isinstance(data, str) and is_hex_string(data):
         data = decode_hex(data)
 
     # be cool mypy
@@ -209,11 +210,22 @@ def create_transaction(
     # EIP-1559 transactions should never have gas_price
     if gas_price and (max_priority_fee_per_gas or max_fee_per_gas):
         raise ValueError(
-            "gas_price is incompatible with max_priority_fee_per_gas and max_fee_per_gas"
+            "gas_price is incompatible with max_priority_fee_per_gas and"
+            " max_fee_per_gas"
         )
+    elif not gas_price and not max_fee_per_gas:
+        # NOTE: Assuming default is 0 gas price. Some test chains support this, and this
+        #       remains backward compatible with previous interface.
+        gas_price = 0
 
     # Create a serializable tx object
     if max_fee_per_gas:
+        if max_priority_fee_per_gas is None:
+            raise ValueError(
+                "If max_fee_per_gas is defined, you must provide"
+                " max_priority_fee_per_gas"
+            )
+
         tx = Type2Transaction(
             destination=destination,
             amount=amount,
@@ -223,9 +235,11 @@ def create_transaction(
             chain_id=chain_id,
             max_priority_fee_per_gas=max_priority_fee_per_gas,
             max_fee_per_gas=max_fee_per_gas,
-            access_list=coerce_access_list(access_list),
+            access_list=coerce_access_list(access_list) if access_list else None,
         )
     elif access_list is not None:
+        assert gas_price is not None
+
         tx = Type1Transaction(
             destination=destination,
             amount=amount,
@@ -237,6 +251,8 @@ def create_transaction(
             access_list=coerce_access_list(access_list),
         )
     else:
+        assert gas_price is not None
+
         tx = Transaction(
             destination=destination,
             amount=amount,
@@ -257,7 +273,7 @@ def create_transaction(
 
 
 def decode_transaction(rawtx: bytes, signed: bool = False) -> SerializableTransaction:
-    """Decode a raw transaction to a Serializable transaction object
+    """Decode a raw transaction to a Serializable transaction object.
 
     :param rawtx: (:code:`bytes`) - Raw transaction to decode
     :param signed: (:code:`bool`) - If the raw transaction is a signed
@@ -266,8 +282,6 @@ def decode_transaction(rawtx: bytes, signed: bool = False) -> SerializableTransa
         for transaction
     """
     tx_type = rawtx[0]
-
-    tx = None
 
     if tx_type < 127:
         if tx_type == 1:

@@ -1,8 +1,10 @@
+"""Main entry point for the CLI."""
+
 import argparse
 import sys
 from enum import IntEnum
 
-from eth_utils import decode_hex, encode_hex
+from eth_utils.hexadecimal import decode_hex
 
 from ledgereth import (
     create_transaction,
@@ -16,12 +18,15 @@ from ledgereth.comms import init_dongle
 
 
 class ExitCodes(IntEnum):
+    """Unix exit codes for the CLI."""
+
     SUCCESS = 0
     GENERAL_ERROR = 1
     INVALID_ARGUMENT = 2
 
 
 def get_args(argv):
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Do some ledger ops")
     parser.add_argument(
         "-d",
@@ -158,6 +163,7 @@ def get_args(argv):
 
 
 def print_accounts(dongle, args):
+    """Print accounts from the Ledger."""
     if args.path:
         account = get_account_by_path(args.path, dongle)
         print(f"Account {account.path} {account.address}")
@@ -168,6 +174,7 @@ def print_accounts(dongle, args):
 
 
 def send_value(dongle, args):
+    """Send a value transaction from a Ledger account."""
     print(f"Sending {args.wei} ETH from {args.from_address} to {args.to_address}")
 
     account = find_account(args.from_address, dongle)
@@ -201,20 +208,32 @@ def send_value(dongle, args):
 
 
 def sign_text_message(dongle, args):
+    """Sign a text message with a Ledger account."""
     print(f'Signing "{args.message}" with {args.account_address}')
 
     account = find_account(args.account_address, dongle)
+
+    if not account:
+        print("Account not found on device", file=sys.stderr)
+        return
+
     signed = sign_message(args.message, account.path)
 
     print(f"Signature: {signed.signature}")
 
 
 def sign_typed_data(dongle, args):
+    """Sign a typed data message with a Ledger account."""
     print(f"Signing typed data with account {args.account_address}")
     print(f"Domain hash: {args.domain_hash}")
     print(f"Message hash: {args.message_hash}")
 
     account = find_account(args.account_address, dongle)
+
+    if not account:
+        print("Account not found on device", file=sys.stderr)
+        return
+
     signed = sign_typed_data_draft(
         decode_hex(args.domain_hash), decode_hex(args.message_hash), account.path
     )
@@ -231,6 +250,7 @@ COMMANDS = {
 
 
 def main(argv=sys.argv[1:]):
+    """Main entry point for the CLI."""
     args = get_args(argv)
     command = args.command
 

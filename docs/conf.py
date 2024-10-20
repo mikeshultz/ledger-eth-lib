@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
+"""Configuration file for the Sphinx documentation builder."""
+
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
@@ -207,6 +205,7 @@ todo_include_todos = True
 
 
 def skip(app, what, name, obj, would_skip, options):
+    """Skip __init__ methods with no docstring."""
     if name == "__init__":
         # Skip if there's no docstring
         return getattr(obj, "__doc__", None) is None
@@ -214,4 +213,5 @@ def skip(app, what, name, obj, would_skip, options):
 
 
 def setup(app):
+    """Setup the Sphinx app."""
     app.connect("autodoc-skip-member", skip)

@@ -1,15 +1,15 @@
+"""Functions for signing messages on the Ledger device."""
+
 import binascii
 import struct
 from typing import Optional, Union
 
 from ledgereth.comms import Dongle, dongle_send_data, init_dongle
-from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_CHAIN_ID, DEFAULT_PATH_STRING
+from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_PATH_STRING
 from ledgereth.objects import SignedMessage, SignedTypedMessage
 from ledgereth.utils import (
     chunks,
-    coerce_access_list,
     is_bip32_path,
-    is_hex_string,
     parse_bip32_path,
 )
 
@@ -21,8 +21,10 @@ def sign_message(
     sender_path: str = DEFAULT_PATH_STRING,
     dongle: Optional[Dongle] = None,
 ) -> SignedMessage:
-    """Sign a simple text message.  Message will be prefixed by the Ethereum
-    app on the Ledger device according to `EIP-191`_.
+    """Sign a simple text message.
+
+    The message will be prefixed by the Ethereum app on the Ledger device according to
+    `EIP-191`_.
 
     :param message: (:code:`str|bytes`) - A bit of text to sign
     :param sender_path: (:code:`str`) - HD derivation path for the account to
@@ -36,7 +38,7 @@ def sign_message(
     dongle = init_dongle(dongle)
     retval = None
 
-    if type(message) == str:
+    if isinstance(message, str):
         message = message.encode("utf-8")
 
     # Silence mypy due to type cohersion above
@@ -114,14 +116,13 @@ def sign_typed_data_draft(
     .. _`eth_account`: https://eth-account.readthedocs.io/
     .. _`ledgereth's unit tests`: https://github.com/mikeshultz/ledger-eth-lib/blob/2e47e7b9d70136a6dda0229c7bf516ed6bbe850f/tests/test_message_signing.py#L55-L74
     """
-
     given_dongle = dongle is not None
     dongle = init_dongle(dongle)
     retval = None
 
-    if type(domain_hash) == str:
+    if isinstance(domain_hash, str):
         domain_hash = domain_hash.encode("utf-8")
-    if type(message_hash) == str:
+    if isinstance(message_hash, str):
         message_hash = message_hash.encode("utf-8")
 
     # Silence mypy due to type cohersion above
