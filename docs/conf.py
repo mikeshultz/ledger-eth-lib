@@ -12,6 +12,7 @@
 #
 import os
 import sys
+from importlib.metadata import version
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -22,10 +23,10 @@ project = "ledgereth"
 copyright = "2024, Mike Shultz"
 author = "Mike Shultz"
 
-# The short X.Y version
-version = "0.9.1"
 # The full version, including alpha/beta/rc tags
-release = "0.9.1"
+release = version("ledgereth")
+# The short X.Y version
+version = ".".join(release.split(".")[:2])
 
 
 # -- General configuration ---------------------------------------------------
