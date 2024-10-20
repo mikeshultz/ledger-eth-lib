@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "ledgereth"
-copyright = "2022, Mike Shultz"
+copyright = "2024, Mike Shultz"
 author = "Mike Shultz"
 
 # The short X.Y version
@@ -67,7 +67,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -93,7 +93,6 @@ html_theme_options = {
     # 'canonical_url': '',
     # 'analytics_id': 'UA-XXXXXXX-1',  #  Provided by Google in your dashboard
     # 'logo_only': False,
-    "display_version": True,
     # 'prev_next_buttons_location': 'bottom',
     # 'style_external_links': False,
     # 'vcs_pageview_mode': '',
@@ -104,6 +103,7 @@ html_theme_options = {
     "navigation_depth": 4,
     "includehidden": True,
     "titles_only": False,
+    "version_selector": True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
