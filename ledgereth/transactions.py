@@ -162,7 +162,7 @@ def create_transaction(
     max_fee_per_gas: int | None = None,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
-    access_list: Union[AccessListInput, AccessList] | None = None,
+    access_list: AccessListInput | AccessList | None = None,
     dongle: Dongle | None = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from given arguments.
