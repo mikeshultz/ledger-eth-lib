@@ -1,4 +1,4 @@
-# flake8:noqa
+"""ledgereth, a library to interface with ledger-app-eth on Ledger hardware wallets."""
 from importlib.metadata import metadata
 from ledgereth.accounts import find_account, get_account_by_path, get_accounts
 from ledgereth.messages import sign_message, sign_typed_data_draft
