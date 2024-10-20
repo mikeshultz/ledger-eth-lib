@@ -6,7 +6,7 @@ Install
 System Requirements
 *******************
 
-Some system level depenencies may be required for `ledgereth` to communicate with your Ledger.  These are the same `dependencies for ledgerblue`_. Python >= 3.8 is required.
+Some system level depenencies may be required for `ledgereth` to communicate with your Ledger.  These are the same `dependencies for ledgerblue`_. Python >= 3.9 is required.
 
 .. _`dependencies for ledgerblue`: https://github.com/LedgerHQ/blue-loader-python#installation-pre-requisites
 
