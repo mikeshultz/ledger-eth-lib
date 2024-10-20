@@ -8,17 +8,16 @@ import struct
 from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_PATH_STRING
 from ledgereth.objects import SignedMessage, SignedTypedMessage
+from ledgereth.types import Text
 from ledgereth.utils import (
     chunks,
     is_bip32_path,
     parse_bip32_path,
 )
 
-AnyText = str | bytes
-
 
 def sign_message(
-    message: AnyText,
+    message: Text,
     sender_path: str = DEFAULT_PATH_STRING,
     dongle: Dongle | None = None,
 ) -> SignedMessage:
@@ -91,8 +90,8 @@ def sign_message(
 
 
 def sign_typed_data_draft(
-    domain_hash: AnyText,
-    message_hash: AnyText,
+    domain_hash: Text,
+    message_hash: Text,
     sender_path: str = DEFAULT_PATH_STRING,
     dongle: Dongle | None = None,
 ) -> SignedTypedMessage:
