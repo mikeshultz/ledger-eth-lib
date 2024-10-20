@@ -1,7 +1,7 @@
 """Exceptions for the ledgereth package."""
 
+from collections.abc import Mapping
 from enum import IntEnum
-from typing import Mapping
 
 from ledgerblue.commException import CommException
 

@@ -1,8 +1,9 @@
 """Functions for signing messages on the Ledger device."""
 
+from __future__ import annotations
+
 import binascii
 import struct
-from typing import Optional, Union
 
 from ledgereth.comms import Dongle, dongle_send_data, init_dongle
 from ledgereth.constants import DATA_CHUNK_SIZE, DEFAULT_PATH_STRING
@@ -13,13 +14,13 @@ from ledgereth.utils import (
     parse_bip32_path,
 )
 
-AnyText = Union[str, bytes]
+AnyText = str | bytes
 
 
 def sign_message(
     message: AnyText,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Optional[Dongle] = None,
+    dongle: Dongle | None = None,
 ) -> SignedMessage:
     """Sign a simple text message.
 
@@ -93,7 +94,7 @@ def sign_typed_data_draft(
     domain_hash: AnyText,
     message_hash: AnyText,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Optional[Dongle] = None,
+    dongle: Dongle | None = None,
 ) -> SignedTypedMessage:
     """Sign `EIP-721`_ typed data.
 

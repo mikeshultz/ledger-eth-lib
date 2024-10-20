@@ -1,7 +1,7 @@
 """Constanes used by the ledgereth package."""
 
 import os
-from typing import Any, Dict
+from typing import Any
 
 
 def getenvint(key, default=0):
@@ -38,7 +38,7 @@ VRS_RETURN_LENGTH = (65).to_bytes(1, "big")
 DATA_CHUNK_SIZE = 255
 
 # Default "zero" values in EVM/Solidity
-DEFAULTS: Dict[type, Any] = {
+DEFAULTS: dict[type, Any] = {
     int: 0,
     bytes: b"",
 }

@@ -1,7 +1,6 @@
 """This module provides functions for creating and signing transactions."""
 
 import binascii
-from typing import Optional, Union
 
 from eth_utils.hexadecimal import decode_hex
 from rlp import Serializable, encode
@@ -31,7 +30,7 @@ from ledgereth.utils import (
 def sign_transaction(
     tx: Serializable,
     sender_path: str = DEFAULT_PATH_STRING,
-    dongle: Optional[Dongle] = None,
+    dongle: Dongle | None = None,
 ) -> SignedTransaction:
     """Sign a :class:`rlp.Serializable` transaction object.
 
@@ -158,13 +157,13 @@ def create_transaction(
     gas: int,
     nonce: int,
     data: Text = b"",
-    gas_price: Optional[int] = None,
-    max_priority_fee_per_gas: Optional[int] = None,
-    max_fee_per_gas: Optional[int] = None,
+    gas_price: int | None = None,
+    max_priority_fee_per_gas: int | None = None,
+    max_fee_per_gas: int | None = None,
     chain_id: int = DEFAULT_CHAIN_ID,
     sender_path: str = DEFAULT_PATH_STRING,
-    access_list: Optional[Union[AccessListInput, AccessList]] = None,
-    dongle: Optional[Dongle] = None,
+    access_list: Union[AccessListInput, AccessList] | None = None,
+    dongle: Dongle | None = None,
 ) -> SignedTransaction:
     """Create and sign a transaction from given arguments.
 

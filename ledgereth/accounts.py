@@ -1,7 +1,5 @@
 """Account management functions for Ledger devices."""
 
-from typing import List, Optional
-
 from eth_utils.address import to_checksum_address
 
 from ledgereth.comms import (
@@ -20,7 +18,7 @@ from ledgereth.utils import parse_bip32_path
 
 
 def get_account_by_path(
-    path_string: str, dongle: Optional[Dongle] = None
+    path_string: str, dongle: Dongle | None = None
 ) -> LedgerAccount:
     """Return an account for a specific `BIP-44`_ derivation path.
 
@@ -42,8 +40,8 @@ def get_account_by_path(
 
 
 def get_accounts(
-    dongle: Optional[Dongle] = None, count: int = DEFAULT_ACCOUNTS_FETCH
-) -> List[LedgerAccount]:
+    dongle: Dongle | None = None, count: int = DEFAULT_ACCOUNTS_FETCH
+) -> list[LedgerAccount]:
     """Return available accounts.
 
     :param dongle: (:class:`ledgerblue.Dongle.Dongle`) -  The Dongle instance to
@@ -67,8 +65,8 @@ def get_accounts(
 
 
 def find_account(
-    address: str, dongle: Optional[Dongle] = None, count: int = MAX_ACCOUNTS_FETCH
-) -> Optional[LedgerAccount]:
+    address: str, dongle: Dongle | None = None, count: int = MAX_ACCOUNTS_FETCH
+) -> LedgerAccount | None:
     """Find an account by address.
 
     :param address: (:class:`str`) - An address to look up

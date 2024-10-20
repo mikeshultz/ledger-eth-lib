@@ -1,6 +1,6 @@
 """Functionality for communication with Ledger devices using the APDU protocol."""
 
-from typing import Optional
+from __future__ import annotations
 
 from eth_utils.hexadecimal import add_0x_prefix
 from ledgerblue.comm import getDongle
@@ -11,8 +11,8 @@ from ledgereth.constants import DEFAULT_PATH_ENCODED
 from ledgereth.exceptions import LedgerError
 from ledgereth.objects import ISO7816Command
 
-DONGLE_CACHE: Optional[Dongle] = None
-DONGLE_CONFIG_CACHE: Optional[bytes] = None
+DONGLE_CACHE: Dongle | None = None
+DONGLE_CONFIG_CACHE: bytes | None = None
 
 
 class LedgerCommands:
@@ -93,8 +93,8 @@ class LedgerCommands:
     def get_with_data(
         name: str,
         data: bytes,
-        Lc: Optional[bytes] = None,  # noqa: N803
-        Le: Optional[bytes] = None,  # noqa: N803
+        Lc: bytes | None = None,  # noqa: N803
+        Le: bytes | None = None,  # noqa: N803
     ) -> bytes:
         """Format a Ledger APDU command with given data."""
         if not hasattr(LedgerCommands, name):
@@ -108,7 +108,7 @@ class LedgerCommands:
         return cmd.encode()
 
 
-def dongle_send(dongle: Dongle, command_string: str) -> Optional[bytes]:
+def dongle_send(dongle: Dongle, command_string: str) -> bytes | None:
     """Send a command to the dongle."""
     hex_command = LedgerCommands.get(command_string)
     try:
@@ -121,9 +121,9 @@ def dongle_send_data(
     dongle: Dongle,
     command_string: str,
     data: bytes,
-    Lc: Optional[bytes] = None,  # noqa: N803
-    Le: Optional[bytes] = None,  # noqa: N803
-) -> Optional[bytes]:
+    Lc: bytes | None = None,  # noqa: N803
+    Le: bytes | None = None,  # noqa: N803
+) -> bytes | None:
     """Send a command with data to the dongle."""
     hex_command = LedgerCommands.get_with_data(command_string, data, Lc=Lc, Le=Le)
     try:
@@ -169,7 +169,7 @@ def is_usable_version(confbytes: bytes) -> bool:
     return True
 
 
-def init_dongle(dongle: Optional[Dongle] = None, debug: bool = False) -> Dongle:
+def init_dongle(dongle: Dongle | None = None, debug: bool = False) -> Dongle:
     """Initialize the dongle and sanity check the connection."""
     global DONGLE_CACHE, DONGLE_CONFIG_CACHE
 
