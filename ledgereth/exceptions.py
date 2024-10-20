@@ -1,9 +1,14 @@
+"""Exceptions for the ledgereth package."""
+
+from collections.abc import Mapping
 from enum import IntEnum
 
 from ledgerblue.commException import CommException
 
 
 class LedgerErrorCodes(IntEnum):
+    """Known hex error codes returned by the Ledger device."""
+
     OK = 0x9000
 
     ##
@@ -47,6 +52,7 @@ class LedgerErrorCodes(IntEnum):
 
     @classmethod
     def get_by_value(cls, val):
+        """Get the enum member by its value."""
         try:
             return cls(val)
         except ValueError:
@@ -54,6 +60,8 @@ class LedgerErrorCodes(IntEnum):
 
 
 class LedgerError(Exception):
+    """An exception raised from a Ledger device error."""
+
     message = "Unexpected Ledger error"
 
     def __init__(self, message=None):
@@ -61,39 +69,41 @@ class LedgerError(Exception):
 
     @classmethod
     def transalate_comm_exception(cls, exp: CommException):
+        """Translate a Ledger CommException to a LedgerError."""
         return ERROR_CODE_EXCEPTIONS.get(
-            exp.sw,
+            exp.sw,  # type: ignore
             LedgerError(
-                f"Unexpected error: {hex(exp.sw)} {LedgerErrorCodes.get_by_value(exp.sw) or 'UNKNOWN'}"
+                f"Unexpected error: {hex(exp.sw)}"
+                f" {LedgerErrorCodes.get_by_value(exp.sw) or 'UNKNOWN'}"
             ),
         )
 
 
-class LedgerNotFound(LedgerError):
+class LedgerNotFound(LedgerError):  # noqa: D101, N818
     message = "Unable to find Ledger device"
 
 
-class LedgerLocked(LedgerError):
+class LedgerLocked(LedgerError):  # noqa: D101, N818
     message = "Ledger appears to be locked"
 
 
-class LedgerAppNotOpened(LedgerError):
+class LedgerAppNotOpened(LedgerError):  # noqa: D101, N818
     message = "Expected Ledger Ethereum app not open"
 
 
-class LedgerCancel(LedgerError):
+class LedgerCancel(LedgerError):  # noqa: D101, N818
     message = "Action cancelled by the user"
 
 
-class LedgerInvalidADPU(LedgerError):
+class LedgerInvalidADPU(LedgerError):  # noqa: D101, N818
     message = "Internal error.  Invalid data unit sent to ledger."
 
 
-class LedgerInvalid(LedgerError):
+class LedgerInvalid(LedgerError):  # noqa: D101, N818
     message = 'Invalid data sent to ledger or "blind signing" is not enabled'
 
 
-ERROR_CODE_EXCEPTIONS = {
+ERROR_CODE_EXCEPTIONS: Mapping[LedgerErrorCodes, type[LedgerError]] = {
     LedgerErrorCodes.UKNOWN: LedgerNotFound,
     LedgerErrorCodes.DEVICE_LOCKED: LedgerLocked,
     LedgerErrorCodes.APP_SLEEP: LedgerAppNotOpened,

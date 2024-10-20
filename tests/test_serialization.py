@@ -2,7 +2,8 @@
 Test objects and serialization
 """
 
-from eth_utils import decode_hex, is_checksum_address
+from eth_utils.address import is_checksum_address
+from eth_utils.hexadecimal import decode_hex
 
 from ledgereth.constants import DEFAULT_CHAIN_ID, DEFAULTS
 from ledgereth.objects import (
@@ -14,7 +15,6 @@ from ledgereth.objects import (
     Type1Transaction,
     Type2Transaction,
 )
-from ledgereth.transactions import create_transaction, sign_transaction
 
 
 def test_account():
@@ -76,7 +76,10 @@ def test_signed_legacy_serialization(yield_dongle):
         "big",
     )
     s = int.from_bytes(
-        b"3,9\xdc\xd3\x98\xea4\xa4\x8b\x87\x18\x98\xd5\x89\xf5_\xc4\xc7\xbc\xe0\x05b\xfbg\x0c\x97.~\x1b\x07 ",
+        (
+            b"3,9\xdc\xd3\x98\xea4\xa4\x8b\x87\x18\x98\xd5\x89\xf5_\xc4\xc7\xbc\xe0"
+            b"\x05b\xfbg\x0c\x97.~\x1b\x07 "
+        ),
         "big",
     )
     v = 1
@@ -113,7 +116,7 @@ def test_type1_serialization(yield_dongle):
     gas_price = int(1e9)
     data = b"0xdeadbeef"
     nonce = 666
-    access_list = [[destination, [10, 200, 3000]]]
+    access_list = [(destination, [10, 200, 3000])]
 
     tx = Type1Transaction(
         chain_id=DEFAULT_CHAIN_ID,
@@ -133,9 +136,9 @@ def test_type1_serialization(yield_dongle):
     assert tx.amount == amount
     assert tx.data == data
     assert tx.chain_id == DEFAULT_CHAIN_ID
-    assert type(tx.access_list) == tuple
+    assert isinstance(tx.access_list, tuple)
     assert len(tx.access_list) == len(access_list)
-    assert type(tx.access_list[0]) == tuple
+    assert isinstance(tx.access_list[0], tuple)
     assert tx.access_list[0][0] == destination
     assert len(tx.access_list[0][1]) == len(access_list[0][1])
 
@@ -148,13 +151,16 @@ def test_signed_type1_serialization(yield_dongle):
     gas_price = int(1e9)
     data = b"0xdeadbeef"
     nonce = 666
-    access_list = [[destination, [10, 200, 3000]]]
+    access_list = [(destination, [10, 200, 3000])]
     r = int.from_bytes(
         b"#\xdc\x11\x1d|:\xd1\xdf\x98\x06\xce\x1e\x8e\xb4\xf5_W\xdb\xa1\x173\x9cT^u\x93\xd1\xf6\xc3\xb0&b",
         "big",
     )
     s = int.from_bytes(
-        b"3,9\xdc\xd3\x98\xea4\xa4\x8b\x87\x18\x98\xd5\x89\xf5_\xc4\xc7\xbc\xe0\x05b\xfbg\x0c\x97.~\x1b\x07 ",
+        (
+            b"3,9\xdc\xd3\x98\xea4\xa4\x8b\x87\x18\x98\xd5\x89\xf5_\xc4\xc7\xbc\xe0"
+            b"\x05b\xfbg\x0c\x97.~\x1b\x07 "
+        ),
         "big",
     )
     v = 1
@@ -183,9 +189,9 @@ def test_signed_type1_serialization(yield_dongle):
     assert tx.sender_r == r
     assert tx.sender_s == s
     assert tx.y_parity == v
-    assert type(tx.access_list) == tuple
+    assert isinstance(tx.access_list, tuple)
     assert len(tx.access_list) == len(access_list)
-    assert type(tx.access_list[0]) == tuple
+    assert isinstance(tx.access_list[0], tuple)
     assert tx.access_list[0][0] == destination
     assert len(tx.access_list[0][1]) == len(access_list[0][1])
     assert tx.raw_transaction()
@@ -200,7 +206,7 @@ def test_type2_serialization(yield_dongle):
     max_priority_fee_per_gas = int(1e9)
     data = b"0xdeadbeef"
     nonce = 666
-    access_list = [[destination, [10, 200, 3000]]]
+    access_list = [(destination, [10, 200, 3000])]
 
     tx = Type2Transaction(
         chain_id=DEFAULT_CHAIN_ID,
@@ -222,9 +228,9 @@ def test_type2_serialization(yield_dongle):
     assert tx.amount == amount
     assert tx.data == data
     assert tx.chain_id == DEFAULT_CHAIN_ID
-    assert type(tx.access_list) == tuple
+    assert isinstance(tx.access_list, tuple)
     assert len(tx.access_list) == len(access_list)
-    assert type(tx.access_list[0]) == tuple
+    assert isinstance(tx.access_list[0], tuple)
     assert tx.access_list[0][0] == destination
     assert len(tx.access_list[0][1]) == len(access_list[0][1])
 
@@ -238,13 +244,16 @@ def test_signed_type2_serialization(yield_dongle):
     max_priority_fee_per_gas = int(1e9)
     data = b"0xdeadbeef"
     nonce = 666
-    access_list = [[destination, [10, 200, 3000]]]
+    access_list = [(destination, [10, 200, 3000])]
     r = int.from_bytes(
         b"#\xdc\x11\x1d|:\xd1\xdf\x98\x06\xce\x1e\x8e\xb4\xf5_W\xdb\xa1\x173\x9cT^u\x93\xd1\xf6\xc3\xb0&b",
         "big",
     )
     s = int.from_bytes(
-        b"3,9\xdc\xd3\x98\xea4\xa4\x8b\x87\x18\x98\xd5\x89\xf5_\xc4\xc7\xbc\xe0\x05b\xfbg\x0c\x97.~\x1b\x07 ",
+        (
+            b"3,9\xdc\xd3\x98\xea4\xa4\x8b\x87\x18\x98\xd5\x89\xf5_\xc4\xc7\xbc\xe0\x05b"
+            b"\xfbg\x0c\x97.~\x1b\x07 "
+        ),
         "big",
     )
     v = 1
@@ -275,9 +284,9 @@ def test_signed_type2_serialization(yield_dongle):
     assert tx.sender_r == r
     assert tx.sender_s == s
     assert tx.y_parity == v
-    assert type(tx.access_list) == tuple
+    assert isinstance(tx.access_list, tuple)
     assert len(tx.access_list) == len(access_list)
-    assert type(tx.access_list[0]) == tuple
+    assert isinstance(tx.access_list[0], tuple)
     assert tx.access_list[0][0] == destination
     assert len(tx.access_list[0][1]) == len(access_list[0][1])
     assert tx.raw_transaction()

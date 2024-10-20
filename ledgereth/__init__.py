@@ -1,5 +1,5 @@
 # flake8:noqa
-from ledgereth._meta import author, email, version
+from importlib.metadata import metadata
 from ledgereth.accounts import find_account, get_account_by_path, get_accounts
 from ledgereth.messages import sign_message, sign_typed_data_draft
 from ledgereth.objects import (
@@ -12,9 +12,13 @@ from ledgereth.objects import (
 )
 from ledgereth.transactions import create_transaction, sign_transaction
 
+meta = metadata("ledgereth")
+
 __all__ = [
     "Transaction",
-    "Type1Transaction" "Type2Transaction" "SignedTransaction",
+    "Type1Transaction",
+    "Type2Transaction",
+    "SignedTransaction",
     "SignedType1Transaction",
     "SignedType2Transaction",
     "create_transaction",
@@ -25,6 +29,6 @@ __all__ = [
     "sign_transaction",
     "sign_typed_data_draft",
 ]
-__version__ = version
-__author__ = author
-__email__ = email
+__version__ = meta["Version"]
+__author__ = meta["Author-email"].split("<")[0].strip()
+__email__ = meta["Author-email"]

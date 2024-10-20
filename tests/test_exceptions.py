@@ -1,4 +1,4 @@
-""" Test that exceptions are translated/rendered correctly """
+"""Test that exceptions are translated/rendered correctly"""
 
 import pytest
 from ledgerblue.commException import CommException

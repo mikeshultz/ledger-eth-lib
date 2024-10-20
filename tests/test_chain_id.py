@@ -34,8 +34,6 @@ def test_invalid_legacy_chain_ids(yield_dongle):
     destination = "0xf0155486a14539f784739be1c02e93f28eb8e901"
 
     with yield_dongle() as dongle:
-        sender = get_accounts(dongle=dongle, count=1)[0].address
-
         with pytest.raises(
             ValueError,
             match="chain_id must be a 32-bit integer for type 0 transactions",
@@ -79,8 +77,6 @@ def test_invalid_type1_chain_ids(yield_dongle):
     destination = "0xf0155486a14539f784739be1c02e93f28eb8e903"
 
     with yield_dongle() as dongle:
-        sender = get_accounts(dongle=dongle, count=1)[0].address
-
         with pytest.raises(
             ValueError,
             match="chain_id must not be above 999999999999999",
@@ -125,8 +121,6 @@ def test_invalid_type2_chain_ids(yield_dongle):
     destination = "0xf0155486a14539f784739be1c02e93f28eb8e905"
 
     with yield_dongle() as dongle:
-        sender = get_accounts(dongle=dongle, count=1)[0].address
-
         with pytest.raises(
             ValueError,
             match="chain_id must not be above 999999999999999",

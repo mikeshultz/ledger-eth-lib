@@ -7,28 +7,28 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install -e .[dev]
-      - run: black --check .
-      - run: isort --profile black --check .
-      - run: autoflake -cr .
+          python-version: "3.12"
+      - run: pip install .[dev]
+      - run: ruff check
+      - run: ruff format --check
+      - run: pyright
 
   test:
     strategy:
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e .[dev]
+      - run: pip install .[dev]
       - run: pytest

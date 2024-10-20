@@ -1,14 +1,16 @@
+"""ledgereth Objects."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from eth_utils import encode_hex, to_checksum_address
+from eth_utils.address import to_checksum_address
+from eth_utils.hexadecimal import encode_hex
 from rlp import Serializable, decode, encode
-from rlp.sedes import BigEndianInt, Binary, CountableList
+from rlp.sedes import BigEndianInt, Binary, CountableList, big_endian_int, binary
 from rlp.sedes import List as ListSedes
-from rlp.sedes import big_endian_int, binary
 
 from ledgereth.constants import DEFAULT_CHAIN_ID
 from ledgereth.utils import (
@@ -58,7 +60,7 @@ MAX_CHAIN_ID = 0x38D7EA4C67FFF
 
 
 class TransactionType(IntEnum):
-    """An Ethereum EIP-2718 transaction type"""
+    """An Ethereum EIP-2718 transaction type."""
 
     #: Original and EIP-155
     LEGACY = 0
@@ -68,24 +70,24 @@ class TransactionType(IntEnum):
     EIP_1559 = 2
 
     def to_byte(self):
-        """Decode TransactionType to a single byte"""
+        """Decode TransactionType to a single byte."""
         return self.value.to_bytes(1, "big")
 
 
 class ISO7816Command:
-    """A representation of an ISO-7816 APDU Command binary to be sent to the
-    Ledger device."""
+    """An ISO-7816 APDU Command binary to be sent to the Ledger device."""
 
     def __init__(
         self,
-        CLA: bytes,
-        INS: bytes,
-        P1: bytes,
-        P2: bytes,
-        Lc: Optional[bytes] = None,
-        Le: Optional[bytes] = None,
-        data: Optional[bytes] = None,
+        CLA: bytes,  # noqa: N803
+        INS: bytes,  # noqa: N803
+        P1: bytes,  # noqa: N803
+        P2: bytes,  # noqa: N803
+        Lc: bytes | None = None,  # noqa: N803
+        Le: bytes | None = None,  # noqa: N803
+        data: bytes | None = None,
     ):
+        """Initialize an ISO-7816 Command."""
         if not (
             is_bytes(CLA)
             and is_bytes(INS)
@@ -105,8 +107,8 @@ class ISO7816Command:
         self.Le = Le
         self.data = data
 
-    def set_data(self, data: bytes, Lc: Optional[bytes] = None) -> None:
-        """Set the command data and its length
+    def set_data(self, data: bytes, Lc: bytes | None = None) -> None:  # noqa: N803
+        """Set the command data and its length.
 
         :param data: (:class:`bytes`) - The raw ``bytes`` data. This should not
             exceed the max chunk length of 255 (including command data)
@@ -152,8 +154,7 @@ class ISO7816Command:
 
 
 class LedgerAccount:
-    """A representation of an account derived from the private key on a Ledger
-    device."""
+    """An account derived from the private key on a Ledger device."""
 
     #: The HD path of the account
     path: str
@@ -190,21 +191,20 @@ class LedgerAccount:
 
 
 class SerializableTransaction(Serializable):
-    """An RLP Serializable transaction object"""
+    """An RLP Serializable transaction object."""
 
     @classmethod
     @abstractmethod
     def from_rawtx(cls, rawtx: bytes) -> SerializableTransaction:
-        """Instantiates a SerializableTransaction given a raw encoded
-        transaction
+        """Instantiates a SerializableTransaction given a raw encoded transaction.
 
         :param rawtx: (:class:`bytes`) - The decoded raw transaction ``bytes``
             to encode into a :class:`ledgereth.objects.SerializableTransaction`
         :return: Instantiated :class:`ledgereth.objects.SerializableTransaction`
         """
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a dictionary representation of the transaction
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary representation of the transaction.
 
         :return: Transaction dict
         """
@@ -213,12 +213,12 @@ class SerializableTransaction(Serializable):
             d[name] = getattr(self, name)
         return d
 
-    def to_rpc_dict(self) -> Dict[str, Any]:
-        """To a dict compatible with web3.py or JSON-RPC
+    def to_rpc_dict(self) -> dict[str, Any]:
+        """To a dict compatible with web3.py or JSON-RPC.
 
         :return: Transaction dict
         """
-        d: Dict[str, Any] = {}
+        d: dict[str, Any] = {}
 
         for name, _ in self.__class__._meta.fields:
             key = (
@@ -249,7 +249,7 @@ class SerializableTransaction(Serializable):
 
 
 class Transaction(SerializableTransaction):
-    """Unsigned legacy or `EIP-155`_ transaction
+    """Unsigned legacy or `EIP-155`_ transaction.
 
     .. warning:: chain_id for type 0 ("Legacy") transactions must be less than
         4294967295, the largest 32-bit unsigned integer.
@@ -262,7 +262,7 @@ class Transaction(SerializableTransaction):
     .. _`EIP-155`: https://eips.ethereum.org/EIPS/eip-155
     """
 
-    fields = [
+    fields = [  # noqa: RUF012
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
         ("gas_limit", big_endian_int),
@@ -290,7 +290,7 @@ class Transaction(SerializableTransaction):
         dummy1: int = 0,
         dummy2: int = 0,
     ):
-        """Initialize an unsigned transaction
+        """Initialize an unsigned transaction.
 
         :param nonce: (``int``) Transaction nonce
         :param gas_price: (``int``) Gas price in wei
@@ -302,7 +302,6 @@ class Transaction(SerializableTransaction):
         :param dummy1: (``int``) **DO NOT SET**
         :param dummy2: (``int``) **DO NOT SET**
         """
-
         if chain_id > MAX_LEGACY_CHAIN_ID:
             """Chain IDs above 32-bits seems to cause app-ethereum to create
             invalid signatures.  It's not yet clear why this is, or where the
@@ -311,7 +310,8 @@ class Transaction(SerializableTransaction):
             https://github.com/mikeshultz/ledger-eth-lib/issues/41
             """
             raise ValueError(
-                "chain_id must be a 32-bit integer for type 0 transactions. (See issue #41)"
+                "chain_id must be a 32-bit integer for type 0 transactions."
+                " (See issue #41)"
             )
 
         super().__init__(
@@ -328,7 +328,7 @@ class Transaction(SerializableTransaction):
 
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> Transaction:
-        """Instantiate a Transaction object from a raw encoded transaction
+        """Instantiate a Transaction object from a raw encoded transaction.
 
         :param rawtx: (``bytes``) A raw transaction to instantiate with
         :returns: :class:`ledgereth.objects.Transaction`
@@ -354,9 +354,10 @@ class Type1Transaction(SerializableTransaction):
     .. code::
 
         0x01 || rlp([chainId, nonce, gasPrice, gasLimit, destination, amount, data, accessList])
-    """
+    """  # noqa: E501
 
-    fields = [
+    # TODO: Fix this ruff error
+    fields = [  # noqa: RUF012
         ("chain_id", big_endian_int),
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
@@ -379,9 +380,9 @@ class Type1Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
+        access_list: list[tuple[bytes, list[int]]] | None = None,
     ):
-        """Initialize an unsigned type 2 transaction
+        """Initialize an unsigned type 2 transaction.
 
         :param chain_id: (``int``) Chain ID
         :param nonce: (``int``) Transaction nonce
@@ -390,7 +391,7 @@ class Type1Transaction(SerializableTransaction):
         :param destination: (``bytes``) Destination address
         :param amount: (``int``) Amount of Ether to send in wei
         :param data: (``bytes``) Transaction data
-        :param access_list: (``Optional[List[Tuple[bytes, List[int]]]]``) EIP-2718 Access
+        :param access_list: (``list[tuple[bytes, list[int]]] | None``) EIP-2718 Access
             list
         """
         access_list = access_list or []
@@ -419,7 +420,7 @@ class Type1Transaction(SerializableTransaction):
 
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> Type1Transaction:
-        """Instantiate a Type1Transaction object from a raw encoded transaction
+        """Instantiate a Type1Transaction object from a raw encoded transaction.
 
         :param rawtx: (``bytes``) A raw transaction to instantiate with
         :returns: :class:`ledgereth.objects.Type1Transaction`
@@ -448,9 +449,9 @@ class Type2Transaction(SerializableTransaction):
     .. code::
 
         0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list])
-    """
+    """  # noqa: E501
 
-    fields = [
+    fields = [  # noqa: RUF012
         ("chain_id", big_endian_int),
         ("nonce", big_endian_int),
         ("max_priority_fee_per_gas", big_endian_int),
@@ -475,9 +476,9 @@ class Type2Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: Optional[List[Tuple[bytes, List[int]]]] = None,
+        access_list: list[tuple[bytes, list[int]]] | None = None,
     ):
-        """Initialize an unsigned type 2 transaction
+        """Initialize an unsigned type 2 transaction.
 
         :param chain_id: (``int``) Chain ID
         :param nonce: (``int``) Transaction nonce
@@ -489,7 +490,7 @@ class Type2Transaction(SerializableTransaction):
         :param destination: (``bytes``) Destination address
         :param amount: (``int``) Amount of Ether to send in wei
         :param data: (``bytes``) Transaction data
-        :param access_list: (``List[Tuple[bytes, List[int]]]``) EIP-2718 Access
+        :param access_list: (``list[tuple[bytes, list[int]]]``) EIP-2718 Access
             list
         """
         access_list = access_list or []
@@ -519,7 +520,7 @@ class Type2Transaction(SerializableTransaction):
 
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> Type2Transaction:
-        """Instantiate a Type2Transaction object from a raw encoded transaction
+        """Instantiate a Type2Transaction object from a raw encoded transaction.
 
         :param rawtx: (``bytes``) A raw transaction to instantiate with
         :returns: :class:`ledgereth.objects.Type2Transaction`
@@ -538,9 +539,9 @@ class Type2Transaction(SerializableTransaction):
 
 
 class SignedTransaction(SerializableTransaction):
-    """Signed legacy or EIP-155 transaction"""
+    """Signed legacy or EIP-155 transaction."""
 
-    fields = [
+    fields = [  # noqa: RUF012
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
         ("gas_limit", big_endian_int),
@@ -567,7 +568,7 @@ class SignedTransaction(SerializableTransaction):
         r: int,
         s: int,
     ):
-        """Initialize an unsigned transaction
+        """Initialize an unsigned transaction.
 
         :param nonce: (``int``) Transaction nonce
         :param gas_price: (``int``) Gas price in wei
@@ -585,7 +586,7 @@ class SignedTransaction(SerializableTransaction):
 
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> SignedTransaction:
-        """Instantiate a SignedTransaction object from a raw encoded transaction
+        """Instantiate a SignedTransaction object from a raw encoded transaction.
 
         :param rawtx: (``bytes``) A raw signed transaction to instantiate with
         :returns: :class:`ledgereth.objects.SignedTransaction`
@@ -598,7 +599,7 @@ class SignedTransaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        """Return an encoded raw signed transaction
+        """Return an encoded raw signed transaction.
 
         Encoded signed TX format spec:
 
@@ -607,18 +608,18 @@ class SignedTransaction(SerializableTransaction):
             rlp([nonce, gasPrice, gasLimit, destination, amount, data, signatureV, signatureR, signatureS])
 
         :returns: Encoded raw signed transaction bytes
-        """
+        """  # noqa: E501
         return encode_hex(encode(self, SignedTransaction))
 
     # Match the API of the web3.py Transaction object
     #: Encoded raw signed transaction
-    rawTransaction = property(raw_transaction)
+    rawTransaction = property(raw_transaction)  # noqa: N815
 
 
 class SignedType1Transaction(SerializableTransaction):
     """A signed Type 1 transaction."""
 
-    fields = [
+    fields = [  # noqa: RUF012
         ("chain_id", big_endian_int),
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
@@ -644,12 +645,12 @@ class SignedType1Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[int]]],
+        access_list: list[tuple[bytes, list[int]]],
         y_parity: int,
         sender_r: int,
         sender_s: int,
     ):
-        """Initialize a signed type 1 transaction
+        """Initialize a signed type 1 transaction.
 
         :param chain_id: (``int``) Chain ID
         :param nonce: (``int``) Transaction nonce
@@ -658,7 +659,7 @@ class SignedType1Transaction(SerializableTransaction):
         :param destination: (``bytes``) Destination address
         :param amount: (``int``) Amount of Ether to send in wei
         :param data: (``bytes``) Transaction data
-        :param access_list: (``List[Tuple[bytes, List[int]]]``) EIP-2718 Access
+        :param access_list: (``list[tuple[bytes, list[int]]]``) EIP-2718 Access
             list
         :param y_parity: (``int``) Parity byte for the signature
         :param sender_r: (``int``) Signature r value
@@ -680,8 +681,7 @@ class SignedType1Transaction(SerializableTransaction):
 
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> SignedType1Transaction:
-        """Instantiate a SignedType1Transaction object from a raw encoded
-        transaction
+        """Instantiate a SignedType1Transaction object from a raw encoded transaction.
 
         :param rawtx: (``bytes``) A raw signed transaction to instantiate with
         :returns: :class:`ledgereth.objects.SignedType1Transaction`
@@ -699,7 +699,7 @@ class SignedType1Transaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        """Return an encoded raw signed transaction
+        """Return an encoded raw signed transaction.
 
         Encoded signed TX format spec:
 
@@ -708,18 +708,18 @@ class SignedType1Transaction(SerializableTransaction):
             0x01 || rlp([chainId, nonce, gasPrice, gasLimit, destination, amount, data, accessList, signatureYParity, signatureR, signatureS])
 
         :returns: Encoded raw signed transaction bytes
-        """
-        return encode_hex(b"\x01" + encode(self, SignedType1Transaction))
+        """  # noqa: E501
+        return encode_hex(b"\x01" + bytes(encode(self, SignedType1Transaction)))
 
     # Match the API of the web3.py Transaction object
     #: Encoded raw signed transaction
-    rawTransaction = property(raw_transaction)
+    rawTransaction = property(raw_transaction)  # noqa: N815
 
 
 class SignedType2Transaction(SerializableTransaction):
     """A signed Type 2 transaction."""
 
-    fields = [
+    fields = [  # noqa: RUF012
         ("chain_id", big_endian_int),
         ("nonce", big_endian_int),
         ("max_priority_fee_per_gas", big_endian_int),
@@ -747,12 +747,12 @@ class SignedType2Transaction(SerializableTransaction):
         destination: bytes,
         amount: int,
         data: bytes,
-        access_list: List[Tuple[bytes, List[int]]],
+        access_list: list[tuple[bytes, list[int]]],
         y_parity: int,
         sender_r: int,
         sender_s: int,
     ):
-        """Initialize a signed type 2 transaction
+        """Initialize a signed type 2 transaction.
 
         :param chain_id: (``int``) Chain ID
         :param nonce: (``int``) Transaction nonce
@@ -764,7 +764,7 @@ class SignedType2Transaction(SerializableTransaction):
         :param destination: (``bytes``) Destination address
         :param amount: (``int``) Amount of Ether to send in wei
         :param data: (``bytes``) Transaction data
-        :param access_list: (``List[Tuple[bytes, List[int]]]``) EIP-2718 Access
+        :param access_list: (``list[tuple[bytes, list[int]]]``) EIP-2718 Access
             list
         :param y_parity: (``int``) Parity byte for the signature
         :param sender_r: (``int``) Signature r value
@@ -787,8 +787,7 @@ class SignedType2Transaction(SerializableTransaction):
 
     @classmethod
     def from_rawtx(cls, rawtx: bytes) -> SignedType2Transaction:
-        """Instantiate a SignedType2Transaction object from a raw encoded
-        transaction
+        """Instantiate a SignedType2Transaction object from a raw encoded transaction.
 
         :param rawtx: (``bytes``) A raw signed transaction to instantiate with
         :returns: :class:`ledgereth.objects.SignedType2Transaction`
@@ -819,7 +818,7 @@ class SignedType2Transaction(SerializableTransaction):
         )
 
     def raw_transaction(self):
-        """Return an encoded raw signed transaction
+        """Return an encoded raw signed transaction.
 
         Encoded signed TX format spec:
 
@@ -828,15 +827,17 @@ class SignedType2Transaction(SerializableTransaction):
             0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list, signature_y_parity, signature_r, signature_s])
 
         :returns: Encoded raw signed transaction bytes
-        """
-        return encode_hex(b"\x02" + encode(self, SignedType2Transaction))
+        """  # noqa: E501
+        return encode_hex(b"\x02" + bytes(encode(self, SignedType2Transaction)))
 
     # Match the API of the web3.py Transaction object
     #: Encoded raw signed transaction
-    rawTransaction = property(raw_transaction)
+    rawTransaction = property(raw_transaction)  # noqa: N815
 
 
 class Signed(ABC):
+    """A signed object."""
+
     #: Signature v
     v: int
     #: Signature r
@@ -845,13 +846,14 @@ class Signed(ABC):
     s: int
 
     def __init__(self, v, r, s):
+        """Initialize a signed object."""
         self.v = v
         self.r = r
         self.s = s
 
     @property
     def signature(self):
-        """Encoded signature
+        """Encoded signature.
 
         :returns: Signature ``bytes``
         """
@@ -866,12 +868,12 @@ class Signed(ABC):
 
 
 class SignedMessage(Signed):
-    """Signed EIP-191 message"""
+    """Signed EIP-191 message."""
 
     message: bytes
 
     def __init__(self, message, v, r, s):
-        """Initialize a singed message
+        """Initialize a singed message.
 
         :param message: (``bytes``) Message that was signed
         :param v: (``int``) Signature v value
@@ -883,13 +885,13 @@ class SignedMessage(Signed):
 
 
 class SignedTypedMessage(Signed):
-    """Signed EIP-812 typed data"""
+    """Signed EIP-812 typed data."""
 
     domain_hash: bytes
     message_hash: bytes
 
     def __init__(self, domain_hash, message_hash, v, r, s):
-        """Initialize a singed message
+        """Initialize a singed message.
 
         :param domain_hash: (``bytes``) Domain hash that was signed
         :param message_hash: (``bytes``) Message hash that was signed

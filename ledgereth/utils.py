@@ -1,43 +1,41 @@
+"""Utility functions for ledgereth."""
+
+from __future__ import annotations
+
 import re
 import struct
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from collections.abc import Collection, Generator
+from typing import Any, Callable
 
-from eth_utils import decode_hex
+from eth_utils.hexadecimal import decode_hex
 
 from ledgereth.constants import DEFAULTS
+from ledgereth.types import AccessList, AccessListInput
 
 # 44'/60'/0'/0/x
 BIP32_ETH_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+/[0-9]+$"
 BIP32_LEGACY_LEDGER_PATTERN = r"^44'/60'/[0-9]+'/[0-9]+$"
 
-COERCERS: Dict[Type, Callable] = {int: lambda v: int.from_bytes(v, "big")}
+COERCERS: dict[type, Callable] = {int: lambda v: int.from_bytes(v, "big")}
 
 
 def is_bytes(v: Any) -> bool:
+    """Detect if a string is a byte string."""
     return isinstance(v, bytes)
 
 
-def is_optional_bytes(v: Optional[Any]) -> bool:
+def is_optional_bytes(v: Any | None) -> bool:
+    """Detect if a string is a byte string or None."""
     return v is None or is_bytes(v)
 
 
 def is_hex_string(v: Any) -> bool:
+    """Detect if a string is a hex string."""
     return isinstance(v, str) and v.startswith("0x")
 
 
 def is_bip32_path(path: str) -> bool:
-    """Detect if a string a bip32 path that can be given to a Ledger device"""
+    """Detect if a string a bip32 path that can be given to a Ledger device."""
     return (
         re.match(BIP32_ETH_PATTERN, path) is not None
         or re.match(BIP32_LEGACY_LEDGER_PATTERN, path) is not None
@@ -45,8 +43,7 @@ def is_bip32_path(path: str) -> bool:
 
 
 def chunks(it: bytes, chunk_size: int) -> Generator[bytes, None, None]:
-    """Iterate bytes(it) into chunks of chunk_size"""
-
+    """Iterate bytes(it) into chunks of chunk_size."""
     if not isinstance(it, bytes):
         raise TypeError("iterable argument must be type bytes")
 
@@ -63,14 +60,15 @@ def chunks(it: bytes, chunk_size: int) -> Generator[bytes, None, None]:
 
 
 def parse_bip32_path(path: str) -> bytes:
+    """Parse a BIP-32/44 string path into bytes."""
     if not path:
         return b""
 
     result = b""
     elements = path.split("/")
 
-    for pathElement in elements:
-        element = pathElement.split("'")
+    for path_element in elements:
+        element = path_element.split("'")
 
         # Wihout tick (') == 1
         if len(element) == 1:
@@ -84,7 +82,7 @@ def parse_bip32_path(path: str) -> bytes:
 
 
 def decode_bip32_path(path: bytes) -> str:
-    """Decode a BIP-32/44 path from bytes"""
+    """Decode a BIP-32/44 path from bytes."""
     parts = []
 
     for i in range(0, len(path) // 4):
@@ -104,9 +102,9 @@ def decode_bip32_path(path: bytes) -> str:
 
 
 def decode_access_list(
-    access_list: Collection[Tuple[bytes, Collection[bytes]]]
-) -> List[Tuple[bytes, Tuple[int, ...]]]:
-    """Decode an access list into friendly Python types"""
+    access_list: Collection[tuple[bytes, Collection[bytes]]],
+) -> list[tuple[bytes, tuple[int, ...]]]:
+    """Decode an access list into friendly Python types."""
     work_list = []
 
     if not access_list or len(access_list) < 1:
@@ -124,8 +122,9 @@ def decode_access_list(
 
 
 def decode_web3_access_list(
-    access_list: Collection[Dict[str, Union[str, Collection[str]]]]
-) -> List[Tuple[bytes, Tuple[int, ...]]]:
+    access_list: Collection[dict[str, str | Collection[str]]],
+) -> AccessList:
+    """Decode a web3.py access list into friendly Python types."""
     work_list = []
 
     if not access_list or len(access_list) < 1:
@@ -155,47 +154,57 @@ def decode_web3_access_list(
     return work_list
 
 
-def coerce_access_list(access_list):
-    """Validate and type coerce an access list from Python friendly values to
-    values for RLP encoding"""
-    if access_list is None:
-        return []
+def coerce_access_list(access_list: AccessList | AccessListInput) -> AccessList:
+    """Create RLP access list.
 
-    if type(access_list) != list:
+    Validates and type coerce an access list from Python friendly values to values for
+    RLP encoding.
+    """
+    if access_list is None:
+        return list()
+
+    if not isinstance(access_list, list):
         raise ValueError("Expected access_list to be a list")
+
+    acl: AccessList = []
 
     for i, rule in enumerate(access_list):
         if type(rule) not in (list, tuple):
             raise ValueError("Expected access_list rules to be a list or tuple")
 
-        if type(rule) == tuple:
-            access_list[i] = list(rule)
+        if not isinstance(rule, tuple):
+            raise ValueError("Expected access_list rule to be a tuple")
 
         target, slots = rule
 
         if is_hex_string(target):
-            access_list[i][0] = decode_hex(target)
-        elif type(target) != bytes:
+            # Above acts as a TypeGuard
+            assert isinstance(target, str)
+            target = decode_hex(target)
+        elif not isinstance(target, bytes):
             raise ValueError(
                 f"Unexpected type ({type(target)}) for access_list address at index {i}"
             )
 
+        acl.append((target, list()))
+
         for j, slot in enumerate(slots):
             if is_hex_string(slot):
-                access_list[i][1][j] = int(slot, 16)
-            elif type(slot) != int:
+                # Above acts as a TypeGuard
+                assert isinstance(slot, str)
+                acl[i][1].append(int(slot, 16))
+            elif not isinstance(slot, int):
                 raise ValueError(
                     f"Unexpected type ({type(slot)}) for access_list slot at index {j}"
                 )
 
-    return access_list
+    return acl
 
 
 def coerce_list_types(
-    types: List[Optional[type]], to_coerce: List[Union[Any, None]]
-) -> List[Any]:
-    """Coerce types of a list to given types in order"""
-
+    types: list[type | None], to_coerce: list[Any | None]
+) -> list[Any]:
+    """Coerce types of a list to given types in order."""
     for i, v in enumerate(to_coerce):
         # SKIP!
         if types[i] is None:

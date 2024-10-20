@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm[toml]>=5.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ledgereth"
+description = "Library to interface with ledger-app-eth on Ledger hardware wallets"
+urls = {source = "https://github.com/mikeshultz/ledger-eth-lib"}
+authors =[{name = "Mike Shultz", email = "mike@mikeshultz.com"}]
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["ethereum", "evm", "blockchain", "development", "ledger"]
+license = {file = "LICENSE"}
+classifiers = [
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Libraries",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "eth-utils>=2.1.0,<6",
+    "ledgerblue==0.1.48",
+    "rlp~=4.0.1",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "eth-account>=0.13.1",
+    "pyright~=1.1.385",
+    "pytest>=5.3.2",
+    "ruff~=0.7.0",
+    "setuptools>=61.0.0",
+    "twine>=3.1.1",
+    "web3[tester]~=7.3.1",
+    # peer dep of eth-tester of web3[tester]
+    #eth-account==0.12.1
+    "wheel>=0.33.6",
+]
+docs = [
+    "sphinx~=4.5.0",
+    "sphinx-autobuild~=2021.3.14",
+    "sphinx-rtd-theme~=1.0.0",
+]
+
+[tool.pyright]
+include = ["ledgereth", "tests"]
+ignore = ["build/"]
+
+[tool.ruff]
+# Mimic's black's default line length
+line-length = 88
+
+[tool.ruff.lint]
+# Ref: https://docs.astral.sh/ruff/rules
+extend-select = [
+    "D",    # pydocstyle
+    "E501", # Line length
+    "I",    # isort
+    "N",    # PEP8 naming
+    "UP",   # pyupgrade
+    "RUF",  # ruf-specific rules
+    "W",    # warnings
+]
+ignore = [
+    "D105", # document dunder methods
+    "D107", # missing docstring for __init__
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_*.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+testpaths = "tests"
