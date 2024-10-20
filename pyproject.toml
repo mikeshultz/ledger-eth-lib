@@ -35,7 +35,7 @@ dev = [
     "eth-account>=0.13.1",
     "pytest>=5.3.2",
     "ruff~=0.7.0",
-    "setuptools>=44.0.0",
+    "setuptools>=61.0.0",
     "twine>=3.1.1",
     "web3[tester]~=7.3.1",
     # peer dep of eth-tester of web3[tester]
