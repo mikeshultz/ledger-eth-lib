@@ -1,5 +1,7 @@
 """This module provides functions for creating and signing transactions."""
 
+from __future__ import annotations
+
 import binascii
 
 from eth_utils.hexadecimal import decode_hex
