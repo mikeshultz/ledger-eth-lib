@@ -12,8 +12,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install .[dev]
-      - run: riff check
-      - run: riff format --check
+      - run: ruff check
+      - run: ruff format --check
       - run: pyright
 
   test:
